@@ -63,13 +63,13 @@ static inline bool stringEqual(const char * a, const char * b)
 // single line body tags that take text
 %token CLASSTREE COPYMETHOD KEYWORD PRIVATE
 // single line structural tags that take text, with children
-%token SECTION SUBSECTION METHOD ARGUMENT
+%token SECTION SUBSECTION SUBSUBSECTION METHOD ARGUMENT
 // single line structural tags with no text, with children
 %token DESCRIPTION CLASSMETHODS INSTANCEMETHODS EXAMPLES RETURNS DISCUSSION
 // nestable range tags with no text, with children
 %token LIST TREE NUMBEREDLIST DEFINITIONLIST TABLE FOOTNOTE NOTE WARNING
 // modal range tags that take multi-line text
-%token CODE LINK ANCHOR SOFT IMAGE TELETYPE STRONG EMPHASIS
+%token CODE LINK ANCHOR SOFT IMAGE TELETYPE STRONG EMPHASIS SUP SUB
 %token CODEBLOCK "CODE block" TELETYPEBLOCK "TELETYPE block"
 // symbols
 %token TAGSYM "::" BARS "||" HASHES "##"
@@ -183,7 +183,7 @@ optsubsubsections: subsubsections
 subsubsections: subsubsections subsubsection { $$ = doc_node_add_child($1,$2); }
               | subsubsection { $$ = doc_node_make("(SUBSUBSECTIONS)",NULL,$1); }
               | body { $$ = doc_node_make_take_children("(SUBSUBSECTIONS)",NULL,$1); }
-; 
+;
 
 subsubsection: METHOD methnames optMETHODARGS eol methodbody
     {
@@ -207,6 +207,7 @@ subsubsection: METHOD methnames optMETHODARGS eol methodbody
              | PRIVATE commalist eoleof { $$ = doc_node_make_take_children( stringEqual(method_type, "CMETHOD") ? "CPRIVATE"
                                                                                                                 : "IPRIVATE",
                 NULL, $2); }
+             | SUBSECTION words2 eol optsubsubsections { $$ = doc_node_make_take_children("SUBSECTION", $2, $4); }
 ;
 
 optMETHODARGS: { $$ = NULL; }
@@ -318,6 +319,8 @@ inlinetag: LINK { $$ = "LINK"; }
          | CODE { $$ = "CODE"; }
          | TELETYPE { $$ = "TELETYPE"; }
          | ANCHOR { $$ = "ANCHOR"; }
+         | SUP { $$ = "SUP"; }
+         | SUB { $$ = "SUB"; }
 ;
 
 blocktag: CODEBLOCK { $$ = "CODEBLOCK"; }
@@ -328,7 +331,7 @@ listtag: LIST { $$ = "LIST"; }
        | TREE { $$ = "TREE"; }
        | NUMBEREDLIST { $$ = "NUMBEREDLIST"; }
 ;
-       
+
 rangetag: WARNING { $$ = "WARNING"; }
         | NOTE { $$ = "NOTE"; }
 ;
@@ -446,4 +449,3 @@ void scdocerror(const char *str)
         fprintf(stderr,"  %s\n-------------------\n", txt);
 */
 }
-
