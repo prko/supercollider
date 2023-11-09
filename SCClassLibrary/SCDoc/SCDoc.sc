@@ -347,7 +347,7 @@ SCDocNode {
 
 	merge {|root2|
 		var n;
-		var sects = IdentitySet[\BODY,\CLASSMETHODS,\INSTANCEMETHODS,\SECTION,\SUBSECTION,\EXAMPLES];
+		var sects = IdentitySet[\BODY,\CLASSMETHODS,\INSTANCEMETHODS,\SECTION,\SUBSECTION,\SUBSUBSECTION,\EXAMPLES];
 		var do_children = {|dest,childs|
 			var res;
 			childs !? {
