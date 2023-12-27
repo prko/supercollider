@@ -39,6 +39,8 @@
 #include <QMimeData>
 #include <QUrl>
 
+#include <regex>
+
 namespace ScIDE {
 
 ScCodeEditor::ScCodeEditor(Document* doc, QWidget* parent):
@@ -683,11 +685,11 @@ QString ScCodeEditor::makeIndentationString(int level) {
     if (mSpaceIndent) {
         const int spaces = mDoc->indentWidth() * level;
         QString indentationString(spaces, QChar(' '));
-        return indentationString;
+        return regex_replace(indentationString, "(\n|\t|\\s+)(\\.)", "$1 .");
     } else {
         const int tabs = level;
         QString indentationString(tabs, QChar('\t'));
-        return indentationString;
+        return regex_replace(indentationString, "(\n|\t+|\\s+)(\\.)", "$1\t.");
     }
 }
 
