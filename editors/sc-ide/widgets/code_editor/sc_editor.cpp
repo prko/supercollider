@@ -39,8 +39,6 @@
 #include <QMimeData>
 #include <QUrl>
 
-#include <regex>
-
 namespace ScIDE {
 
 ScCodeEditor::ScCodeEditor(Document* doc, QWidget* parent):
@@ -645,6 +643,12 @@ void ScCodeEditor::indent(const QTextCursor& selection, EditBlockMode editBlockM
                 case Token::StringMark:
                     in_string = !in_string;
                     break;
+                    
+                case Token::String:
+                    in_string
+                    std::regex regexPattern("(\n|\t|\\s)(\\.)");
+                    in_string = std::regex_replace(code, regexPattern, "$1\t.");
+                    break
 
                 default:
                     break;
@@ -679,19 +683,26 @@ void ScCodeEditor::indent(const QTextCursor& selection, EditBlockMode editBlockM
 }
 
 QString ScCodeEditor::makeIndentationString(int level) {
+
+    QRegExp rx("(\n|\t|\\s)(\\.)");
+
     if (level <= 0)
         return QString();
 
     if (mSpaceIndent) {
         const int spaces = mDoc->indentWidth() * level;
         QString indentationString(spaces, QChar(' '));
-        return regex_replace(indentationString, "(\n|\t|\\s+)(\\.)", "$1 .");
+        indentationString.replace(rx, "$1 .");
+        return indentationString;
     } else {
         const int tabs = level;
         QString indentationString(tabs, QChar('\t'));
-        return regex_replace(indentationString, "(\n|\t+|\\s+)(\\.)", "$1\t.");
+        indentationString.replace(rx, "$1\t.");
+        return indentationString;
     }
 }
+
+
 
 QTextBlock ScCodeEditor::indent(const QTextBlock& block, int level) {
     QTextCursor cursor(block);
