@@ -1,7 +1,7 @@
 TITLE::LaTeX and MathML Support via MathJax
 summary::How to use LaTeX Syntax in SCDocs using MathJax
 categories:: HelpSystem
-related:: Guides/WritingHelp, Classes/SCDoc, Classes/SCDocHTMLRenderer, Guides/WritingHelp_HTML_LaTeX_MathML
+related:: Guides/WritingHelp, Classes/SCDoc, Classes/SCDocHTMLRenderer
 
 
 
