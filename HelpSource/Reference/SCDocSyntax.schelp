@@ -1,7 +1,7 @@
 title:: SCDoc Syntax
 summary:: SCDoc markup language syntax
 categories:: HelpSystem
-related:: Guides/WritingHelp, Classes/SCDoc, Classes/SCDocHTMLRenderer, Guides/WritingHelp_HTML_LaTeX_MathML
+related:: Guides/WritingHelp, Classes/SCDoc, Classes/SCDocHTMLRenderer, Guides/WritingHelp_Punctuation_HTML_LaTeX_MathML
 
 section:: Introduction
 
