@@ -1,0 +1,73 @@
+TITLE:: Subsubsection in SCDoc
+summary:: How to use Subsubsection in SCDoc
+categories:: HelpSystem
+related:: Guides/WritingHelp, Classes/SCDoc, Classes/SCDocHTMLRenderer, Reference/HTML-tags, Reference/MathJax_LaTeX_MathML, Reference/Non-Code_Punctuation, Guides/WritingHelp_Punctuation_HTML_LaTeX_MathML
+
+
+
+
+
+
+
+
+
+
+section:: 1. Soft-coded Subsubsection
+
+The code snippet below adds a subsection to the table of contents and formats it as an <h4> element in the text body with CSS.
+
+code::
+subsection:: :sub:1. Soft-coded Subsubsection
+::
+
+
+section:: 2. Formatting Text
+
+
+subsection:: 2.1. Text
+
+
+subsection:: :sub:1.1.1. Quotation marks, quotation dash, ellipsis marks and apostrophe
+
+subsection:: :sub:1.1.2. Alternative quotation marks
+
+subsection:: :sub:1.1.3. Alternative brackets for predefined small size text
+
+subsection:: :sub:1.1.4. Paragraph spacing
+
+subsection:: :sub:1.1.5. Table formatting
+
+subsection:: :sub:1.1.6. Horizontal Line
+
+subsection:: :sub:1.1.7. Small Text
+
+subsection:: :sub:1.1.8. Strong and Emphasis
+
+subsection:: :sub:1.1.9. Superscript and Subscript
+
+subsection:: 2.2. Mathematical Expressions
+
+subsection:: :sub:1.2.1. Exponentiation: base and exponent in text body
+
+subsection:: :sub:1.2.2. Logarithm: base and operand in text body
+
+subsection:: :sub:1.2.3. Fraction in text body
+
+subsection:: :sub:1.2.4. Equations
+
+subsection:: 2.3. Embedding other HTML with iframe
+
+section:: 3. Multimedia
+
+subsection:: 3.1. Audio
+
+subsection:: :sub:2.1.1. Offline Audio
+
+subsection:: :sub:2.1.2. Online Audio
+
+subsection:: 3.2. Video
+
+subsection:: :sub:2.2.1. Offline Video
+
+subsection:: :sub:2.2.2. Online Video
+

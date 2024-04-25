@@ -48,33 +48,236 @@ SCDocHTMLRenderer {
 		^x;
 	}
 	*escapeSpacesInAnchor { |str|
-		^str
-		.replace(" ", "%20")
-		//.replace(" ", "%E2%80%82") // does not work if section and subsection contain non-Roman characters.
-		.replace("❪", /*"%E2%9D%AA"*/ "_y(y_")
-		.replace("❫", /*"%E2%9D%AB"*/ "_y)y_")
-		.replace("❨", /*"%E2%9D%A8"*/ "_s(s_")
-		.replace("❩", /*"%E2%9D%A9"*/ "_s)s_")
-		.replace("❲", /*"%E2%9D%B2"*/ "_o(o_")
-		.replace("❳", /*"%E2%9D%B3"*/ "_o)o_")
+		^str.replace(" ", "%20")
 	}
-	*parenthesisForSmallFont { |str|
+
+	*replaceRegexp { |source, findRegexp, replace|
+		var founds, replaced;
+		founds = source.findRegexp(findRegexp);
+		founds = if(findRegexp[0] == $^) {
+			founds.collect { |array| if (array[0] == 0) {array} {} }
+		} {
+			founds
+		};
+		while { founds.includes(nil) } { founds.remove(nil) };
+		founds = founds.asSet.asArray.sort({ |a, b| a[0] < b[0] });
+		replaced = source;
+		if(founds.size > 0) {
+			founds.reverse.do { |idx_str|
+				var foundIndex, foundString;
+				#foundIndex, foundString = idx_str;
+				replaced = if (foundIndex > 0) {
+					var lastString = replaced[foundIndex + foundString.size ..];
+					lastString = if(lastString != nil) { lastString } { "" };
+					replaced[0 .. foundIndex - 1] ++ replace ++ lastString
+				} {
+					replace ++ replaced[foundString.size ..]
+				}
+			}
+		} {
+			replaced
+		};
+		^replaced
+	}
+	*teletypeWithinCode { |str|
+		^str
+		.replace(":teletype:", "teletype::")
+		.replace(":/teletype:", "::")
+	}
+	*parseMathML { |str|
 		str = str
+		.replace("&lt;annotation&gt;", "<annotation>")
+		.replace("&lt;/annotation&gt;", "</annotation>")
+		.replace("&lt;annotation-xml&gt;", "<annotation-xml>")
+		.replace("&lt;annotation-xml ", "<annotation-xml ")
+		.replace("&lt;/annotation-xml&gt;", "</annotation-xml>")
+		.replace("&lt;maction&gt;", "<maction>")
+		.replace("&lt;maction ", "<maction ")
+		.replace("&lt;/maction&gt;", "</maction>")
+		.replace("&lt;math&gt;", "<math>")
+		.replace("&lt;math display='block'&gt;", "<math display='block'>")
+		.replace("&lt;math display='inline'&gt;", "<math display='inline'>")
+		.replace("&lt;math ", "<math ")
+		.replace("&lt;/math&gt;", "</math>")
+		.replace("&lt;merror&gt;", "<merror>")
+		.replace("&lt;/merror&gt;", "</merror>")
+		.replace("&lt;mfrac&gt;", "<mfrac>")
+		.replace("&lt;/mfrac&gt;", "</mfrac>")
+		.replace("&lt;mi&gt;", "<mi>")
+		.replace("&lt;/mi&gt;", "</mi>")
+		.replace("&lt;mmultiscripts>", "<mmultiscripts>")
+		.replace("&lt;mmultiscripts ", "<mmultiscripts ")
+		.replace("&lt;/mmultiscripts>", "</mmultiscripts>")
+		.replace("&lt;mn&gt;", "<mn>")
+		.replace("&lt;/mn&gt;", "</mn>")
+		.replace("&lt;mo&gt;", "<mo>")
+		.replace("&lt;/mo&gt;", "</mo>")
+		.replace("&lt;mover&gt;", "<mover>")
+		.replace("&lt;/mover&gt;", "</mover>")
+		.replace("&lt;mpadded&gt;", "<mpadded>")
+		.replace("&lt;/mpadded&gt;", "</mpadded>")
+		.replace("&lt;mphantom&gt;", "<mphantom>")
+		.replace("&lt;/mphantom&gt;", "</mphantom>")
+		.replace("&lt;mprescripts&gt;", "<mprescripts>")
+		.replace("&lt;/mprescripts&gt;", "</mprescripts>")
+		.replace("&lt;mroot&gt;", "<mroot>")
+		.replace("&lt;/mroot&gt;", "</mroot>")
+		.replace("&lt;mrow&gt;", "<mrow>")
+		.replace("&lt;/mrow&gt;", "</mrow>")
+		.replace("&lt;ms&gt;", "<ms>")
+		.replace("&lt;/ms&gt;", "</ms>")
+		.replace("&lt;mspace&gt;", "<mspace>")
+		.replace("&lt;/mspace&gt;", "</mspace>")
+		.replace("&lt;msqrt&gt;", "<msqrt>")
+		.replace("&lt;/msqrt&gt;", "</msqrt>")
+		.replace("&lt;mstyle&gt;", "<mstyle>")
+		.replace("&lt;/mstyle&gt;", "</mstyle>")
+		.replace("&lt;msub&gt;", "<msub>")
+		.replace("&lt;/msub&gt;", "</msub>")
+		.replace("&lt;msubsup&gt;", "<msubsup>")
+		.replace("&lt;/msubsup&gt;", "</msubsup>")
+		.replace("&lt;msup&gt;", "<msup>")
+		.replace("&lt;/msup&gt;", "</msup>")
+		.replace("&lt;mtable&gt;", "<mtable>")
+		.replace("&lt;/mtable&gt;", "</mtable>")
+		.replace("&lt;mtd&gt;", "<mtd>")
+		.replace("&lt;/mtd&gt;", "</mtd>")
+		.replace("&lt;mtext&gt;", "<mtext>")
+		.replace("&lt;/mtext&gt;", "</mtext>")
+		.replace("&lt;mtr&gt;", "<mtr>")
+		.replace("&lt;/mtr&gt;", "</mtr>")
+		.replace("&lt;munder&gt;", "<munder>")
+		.replace("&lt;/munder&gt;", "</munder>")
+		.replace("&lt;munderover&gt;", "<munderover>")
+		.replace("&lt;/munderover&gt;", "</munderover>")
+		.replace("&lt;semantics&gt;", "<semantics>")
+		.replace("&lt;/semantics&gt;", "</semantics>");
+		str = SCDocHTMLRenderer.replaceRegexp(str, "(?<!n)'&gt;(?!'|\",|=|&|\n\s+<(?!\n)|NOTE:&lt;|WARNING:&lt;|Description&lt;|\n<source|\n<caption|\n</v|\n</a|\nYour)", "'>");
+		^str
+	}
+	*parseHTML { |str|
+		str = str
+
+		// paragraph, line height:
+		.replace("&lt;p&gt;", "\n<p>\n")
+		.replace("&lt;p style='line-height:", "<p style='line-height:")
+		.replace("&lt;/p&gt;", "\n</p>\n")
+
+		// horizontal line:
+		.replace("&lt;hr&gt;", "<hr>")
+
+		// small text:
+		.replace("&lt;small&gt;", "<small>")
+		.replace("&lt;/small&gt;", "</small>")
+
+		// italic:
+		.replace("&lt;em&gt;", "<em>")
+		.replace("&lt;/em&gt;", "</em>")
+		.replace("em'&gt;", "em'>")
+
+		// bold:
+		.replace("&lt;strong&gt;", "<strong>")
+		.replace("&lt;/strong&gt;", "</strong>")
+
+		// subscript and superscript:
+		.replace("&lt;sub&gt;", "<sub>")
+		.replace("&lt;/sub&gt;", "</sub>")
+		.replace("&lt;sup&gt;", "<sup>")
+		.replace("&lt;/sup&gt;", "</sup>")
+
+		// iframe:
+		.replace("&lt;iframe", "<iframe")
+		.replace("&lt;/iframe&gt;", "</iframe>")
+		.replace("'&gt; <source src='", "'> <source src='")
+		.replace("allowfullscreen&gt;", "allowfullscreen>")
+
+		// image:
+		.replace("&lt;img src=", "<img src=")
+
+		// audio:
+		.replace("&lt;audio controls autoplay&gt;", "<audio controls autoplay>")
+		.replace("&lt;audio controls&gt;", "<audio controls>")
+		.replace("&lt;source src=", "<source src=")/*
+		.replace("/wav'&gt;", "/wav'>")
+		.replace("/aiff'&gt;", "/aiff'>")
+		.replace("/flac'&gt;", "/flac'>")
+		.replace("/ogg'&gt;", "/ogg'>")
+		.replace("/mpeg'&gt;", "/mpeg'>")
+		.replace("/mp4'&gt;", "/mp4'>")
+		.replace("/x-ms-wma'&gt;", "/x-ms-wma'>")*/
+		.replace("&lt;/audio&gt;", "</audio>")
+
+		// video:
+		.replace("&lt;video controls autoplay&gt;", "<video controls autoplay>")
+		.replace("&lt;video controls&gt;", "<video controls>")
+		.replace("&lt;video controls width=", "<video controls width=")
+		.replace("&lt;/video&gt;", "</video>")
+
+		// table:
+		.replace("&lt;table&gt;", "\n<table>")
+		.replace("&lt;table ", "\n<table ")
+		.replace("&lt;/table&gt;", "\n</table>")
+		.replace("&lt;caption&gt;", "\n<caption>")
+		.replace("&lt;/caption&gt;", "\n</caption>")
+		.replace("&lt;thead&gt;", "\n<thead>")
+		.replace("&lt;/thead&gt;", "\n</thead>")
+		.replace("&lt;tr&gt;", "\n<tr>")
+		.replace("&lt;/tr&gt;", "\n</tr>")
+		.replace("&lt;th scope='col'&gt;", "\n<th scope='col'>")
+		.replace("&lt;th scope='row'&gt;", "\n<th scope='row'>")
+		.replace("&lt;th ", "\n<th ")
+		.replace("&lt;/th&gt;", "\n</th>")
+		.replace("&lt;tbody&gt;", "\n<tbody>")
+		.replace("&lt;/tbody&gt;", "</tbody>")
+		.replace("&lt;td&gt;", "\n<td>")
+		.replace("&lt;td", "\n<td")
+		.replace("&lt;/td&gt;", "\n</td>");
+
+		// empty line
+		str = SCDocHTMLRenderer.replaceRegexp(str, "(?<!'|')&lt;br&gt;(?!'|')", "\n<br>\n");
+
+		// '&gt; to > (only > converted using this method)'&gt;
+		str = SCDocHTMLRenderer.replaceRegexp(str, "(?<!n)'&gt;(?!'|\",|=|&|\n\s+<(?!\n)|NOTE:&lt;|WARNING:&lt;|Description&lt;|\n<source|\n<caption|\n</v|\n</a|\nYour)", "'>");
+		^str
+	}
+	*renderNonCodePunctuation { |str|
+		^str
 		.replace("%20", " ")
 		//.replace("%E2%80%82", " ") // does not work if section and subsection contain non-Roman characters.
-		.replace(/*"%E2%9D%AA"*/"_y(y_", "❪")
-		.replace(/*"%E2%9D%AB"*/"_y)y_", "❫")
-		.replace(/*"%E2%9D%A8"*/"_s(s_", "❨")
-		.replace(/*"%E2%9D%A9"*/"_s)s_", "❩")
-		.replace(/*"%E2%9D%B2"*/"_o(o_", "❲")
-		.replace(/*"%E2%9D%B3"*/"_o)o_", "❳")
-		.replace("❪", "<span style='font-size: 0.85em'>❪")
-		.replace("❫", "❫</span>")
-		.replace("❨", "<span style='font-size: 0.85em'>❨")
-		.replace("❩", "❩</span>")
-		.replace("❲", "<span style='font-size: 0.71em'>❲")
-		.replace("❳", "❳</span>");
-		^str
+		.replace(/*"%E2%9D%AA"*/"_f(_", "<span style='font-size: 0.85em'>❪") // MEDIUM FLATTENED
+		.replace(/*"%E2%9D%AB"*/"_f)_", "❫</span>")
+		.replace(/*"%E2%9D%A8"*/"_m(_", "<span style='font-size: 0.85em'>❨") // MEDIUM
+		.replace(/*"%E2%9D%A9"*/"_m)_", "❩</span>")
+		.replace(/*"%E2%9D%B2"*/"_s(_", "<span style='font-size: 0.71em'>❲") // TORTOISE SHELL
+		.replace(/*"%E2%9D%B3"*/"_s)_", "❳</span>")
+		.replace(/*"%E2%9F%A8"*/"_m&lt;_", "⟨") // mathematical angle
+		.replace(/*"%E2%9F%A9"*/"_m&gt;_", "⟩")
+		.replace(/*"%E2%9F%AA"*/"_m&lt;&lt;_", "⟪") // mathematical double angle
+		.replace(/*"%E2%9F%AB"*/"_m&gt;&gt;_", "⟫")
+		.replace(/*"%E3%80%88"*/"_n&lt;_", "〈") // angle bracket (problematic with some font due to spacing). Use mathematical angle
+		.replace(/*"%E3%80%89"*/"_n&gt;_", "〉")
+		.replace(/*"%E3%80%8A"*/"_n&lt;&lt;_", "《") // DOUBLE ANGLE BRACKET (problematic with some font due to spacing). Use mathematical double angle
+		.replace(/*"%E3%80%8B"*/"_n&gt;&gt;_", "》")
+		.replace(/*"%E3%80%8C"*/"_c&lt;_", "「") // CORNER BRACKET
+		.replace(/*"%E3%80%8D"*/"_c&gt;_", "」")
+		.replace(/*"%E3%80%8E"*/"_w&lt;_", "『") // WHITE CORNER BRACKET
+		.replace(/*"%E3%80%8F"*/"_w&gt;_", "』")
+		.replace(/*"%E2%80%B9"*/"_p&lt;_", "‹") // POINTING ANGLE
+		.replace(/*"%E2%80%BA"*/"_p&gt;_", "›")
+		.replace(/*"%C2%AB"*/"_p&lt;&lt;_", "«") // POINTING DOUBLE ANGLE
+		.replace(/*"%C2%BB"*/"_p&gt;&gt;_", "»")
+		.replace(/*"%E2%80%9E"*/"_ll\"_", "„") // LOW-9 QUOTATION MARK
+		.replace(/*"%E2%80%9C"*/"_lr\"_", "“")
+		.replace(/*"%E2%80%9A"*/"_ll'_", "‚") // DOUBLE LOW-9 QUOTATION MARK
+		.replace(/*"%E2%80%98"*/"_lr'_", "‘")
+		.replace(/*"%E2%80%9C"*/"_ql\"_", "“") // OPENING DOUBLE QUOTATION
+		.replace(/*"%E2%80%9D"*/"_qr\"_", "”") // CLOSING DOUBLE QUOTATION
+		.replace(/*"%E2%80%98"*/"_ql'_", "‘") // OPENING SINGLE QUOTATION
+		.replace(/*"%E2%80%99"*/"_qr'_", "’") // CLOSING SINGLE QUOTATION
+		.replace(/*"%CA%BC"*/"_a''_", "ʼ") // MODIFIER LETTER APOSTROPHE
+		.replace(/*"%E2%80%%95"*/"_q-_", "―") // HORIZONTAL BAR
+		.replace(/*"%E2%8B%AF"*/"_me..._", "⋯") // MIDLINE HORIZONTAL ELLIPSIS (automatic)
+		.replace(/*"%E2%80%A6"*/"_ue..._", "…") // HORIZONTAL ELLIPSIS (automatic)
 	}
 
 	// Find the target (what goes after href=) for a link that stays inside the hlp system
@@ -193,7 +396,7 @@ SCDocHTMLRenderer {
 		if(escape) { linkText = this.escapeSpecialChars(linkText) };
 
 		// Return a well-formatted <a> tag using the target and link text
-		^"<a href='" ++ linkTarget ++ "'>" ++ linkText ++ "</a>";
+		^"<a href='" ++ linkTarget ++ "'>" ++ SCDocHTMLRenderer.renderNonCodePunctuation(linkText) ++ "</a>";
 	}
 
 	*makeArgString {|m, par=true|
@@ -243,13 +446,13 @@ SCDocHTMLRenderer {
 
 		stream
 		<< "<!doctype html>"
-		<< "<html lang='en'>"
-		<< "<head><title>";
+		<< "\n<html lang='en'>"
+		<< "\n<head>\n<title>";
 
 		if(thisIsTheMainHelpFile) {
 			stream << "SuperCollider " << Main.version << " Help";
 		} {
-			stream << doc.title << " | SuperCollider " << Main.version << " Help";
+			stream << SCDocHTMLRenderer.renderNonCodePunctuation(doc.title) << " | SuperCollider " << Main.version << " Help";
 		};
 
 		// XXX if you make changes here, make sure to also update the static HTML files
@@ -278,11 +481,27 @@ SCDocHTMLRenderer {
 		// << "<script src='qrc:///qtwebchannel/qwebchannel.js' type='text/javascript'></script>\n" // does not exist
 
 		// MathJax |--->
-		// << "<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>\n" // online access
-		<< "<script src='" << baseDir << "/lib/polyfill.min.js?features=es6'></script>\n" // local access of the source above
-		// << "<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>\n" // online access
-		<< "<script src='" << baseDir << "/lib/node_modules/mathjax-full/es5/tex-mml-chtml.js' id='MathJax-script' async></script>" // local access of the source above
-		//<< "<script src='" << baseDir << "/node_modules/mathjax-full/es5/tex-chtml-full-speech.js' id='MathJax-script' async></script>" // local access of tex-chtml-full-speech
+		<< "<script src='" << baseDir << "/lib/polyfill.min.js?features=es6'></script>\n" // local access /* << "<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>\n" */ // online access
+		<< "<script>\n"
+		<< "  window.MathJax = {\n"
+		<< "    tex: {\n"
+		<< "      packages: {'[+]': ['ams']},\n"
+		<< "      processEscapes: true\n"
+		<< "    },\n"
+		<< "    options: {\n"
+		<< "      skipHtmlTags: ['script', 'noscript', 'style', 'textarea']\n"
+		<< "    },\n"
+		<< "    loader: {\n"
+		<< "      load: ['[tex]/ams']\n"
+		<< "    },\n"
+		<< "    startup: {\n"
+		<< "      pageReady: () => {\n"
+		<< "        return MathJax.startup.defaultPageReady();\n"
+		<< "      }\n"
+		<< "    }\n"
+		<< "  };\n"
+		<< "</script>\n"
+		<< "<script id='MathJax-script' src='" << baseDir << "/lib/node_modules/mathjax-full/es5/tex-mml-chtml.js' async></script>\n" // offline accesss /* << "<script id='MathJax-script' src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' async></script>\n" */ // online accesss
 		// <---| MathJax
 
 		<< "</head>\n"
@@ -292,24 +511,24 @@ SCDocHTMLRenderer {
 		displayedTitle = if(
 			thisIsTheMainHelpFile,
 			{ "SuperCollider " ++ Main.version },
-			{ doc.title }
+			{ SCDocHTMLRenderer.renderNonCodePunctuation(doc.title) }
 		);
 
 		stream
-		<< "\n<div id='toc'>\n"
-		<< "\n<div id='toctitle'>" << displayedTitle << ":</div>\n"
+		<< "<div id='toc'>\n"
+		<< "<div id='toctitle'>" << displayedTitle << ":</div>\n"
 		<< "<span class='toc_search'>Filter: <input id='toc_search'></span>";
 		this.renderTOC(stream, body);
-		stream << "</div>\n";
+		stream << "\n</div>\n";
 
 		stream
-		<< "\n<div id='menubar'></div>\n"
-		<< "\n<div class='contents'>\n"
-		<< "\n<div class='header'>\n";
+		<< "<div id='menubar'></div>\n"
+		<< "<div class='contents'>\n"
+		<< "<div class='header'>\n";
 
 		if(thisIsTheMainHelpFile.not) {
 			stream
-			<< "\n<div id='label'>\n"
+			<< "<div id='label'>\n"
 			<< "<span id='folder'>" << folder.asString;
 			if(doc.isExtension) {
 				stream << " (extension)";
@@ -322,7 +541,7 @@ SCDocHTMLRenderer {
 					stream << " | "
 				};
 
-				stream << "<span id='categories'>"
+				stream << "\n<span id='categories'>"
 
 				<< (doc.categories.collect { | path |
 					// get all the components of a category path ("UGens>Generators>Deterministic")
@@ -340,7 +559,7 @@ SCDocHTMLRenderer {
 				<< "</span>\n";
 			};
 
-			stream << "</div>\n";
+			stream << "\n</div>";
 		};
 
 		stream << "\n<h1>" << displayedTitle;
@@ -351,55 +570,55 @@ SCDocHTMLRenderer {
 			stream << "<span id='superclasses'>"
 			<< " : "
 			<< (currentClass.superclasses.collect {|c|
-				"<a href='../Classes/"++c.name++".html'>"++c.name++"</a>"
+				"<a href=\"../Classes/"++c.name++".html\">"++c.name++"</a>"
 			}.join(" : "))
 			<< "</span>\n";
 		};
 		if(doc.isExtension) {
 			stream
-			<< "\n<div class='extension-indicator-ctr' title='This help file originates from a third-party quark or plugin for SuperCollider.'>"
+			<< "<div class='extension-indicator-ctr' title='This help file originates from a third-party quark or plugin for SuperCollider.'>"
 			<< "<img class='extension-indicator-icon' alt='Extension' src='" << baseDir << "/images/plugin.png'>"
 			<< "<span class='extension-indicator-text'>Extension</span>"
-			<< "</div>\n";
+			<< "\n</div>\n";
 		};
 		stream
 		<< "</h1>\n"
-		<< "\n<div id='summary'>" << this.escapeSpecialChars(doc.summary) << "</div>\n"
-		<< "</div>\n"
-		<< "\n<div class='subheader'>\n";
+		<< "<div id='summary'>" << SCDocHTMLRenderer.renderNonCodePunctuation(this.escapeSpecialChars(doc.summary)) << "</div>\n"
+		<< "\n</div>\n"
+		<< "<div class='subheader'>\n";
 
 		if(doc.isClassDoc) {
 			if(currentClass.notNil) {
 				m = currentClass.filenameSymbol.asString;
-				stream << "\n<div id='filename'>Source: "
+				stream << "<div id='filename'>Source: "
 				<< "<a href='%' title='%'>".format(URI.fromLocalPath(m).asString, m)
-				<< m.basename << "</a></div>\n";
+				<< m.basename << "</a></div>";
 				if(currentClass.subclasses.notNil) {
 					z = false;
-					stream << "\n<div id='subclasses'>"
+					stream << "<div id='subclasses'>"
 					<< "Subclasses: "
 					<< (currentClass.subclasses.collect(_.name).sort.collect {|c,i|
 						if(i==4,{z=true;"<span id='hiddensubclasses' style='display:none;'>"},{""})
-						++"<a href='../Classes/"++c++".html'>"++c++"</a>"
+						++"<a href=\"../Classes/"++c++".html\">"++c++"</a>"
 					}.join(", "));
 					if(z) {
 						stream << "</span><a class='subclass_toggle' href='#' onclick='javascript:showAllSubclasses(this); return false'>&hellip;&nbsp;see&nbsp;all</a>";
 					};
-					stream << "</div>\n";
+					stream << "\n</div>\n";
 				};
 				if(currentImplClass.notNil) {
-					stream << "\n<div class='inheritance'>Implementing class: "
-					<< "<a href='../Classes/" << currentImplClass.name << ".html'>"
+					stream << "<div class='inheritance'>Implementing class: "
+					<< "<a href=\"../Classes/" << currentImplClass.name << ".html\">"
 					<< currentImplClass.name << "</a></div>\n";
 				};
 			} {
-				stream << "\n<div id='filename'>Location: <b>NOT INSTALLED!</b></div>\n";
+				stream << "<div id='filename'>Location: <b>NOT INSTALLED!</b></div>\n";
 			};
 		};
 
 		doc.related !? {
-			stream << "\n<div id='related'>See also: "
-			<< (doc.related.collect {|r| this.htmlForLink(r)}.join(", "))
+			stream << "<div id='related'>See also: "
+			<< (doc.related.collect { |r| SCDocHTMLRenderer.renderNonCodePunctuation(this.htmlForLink(r)) }.join(", "))
 			<< "</div>\n";
 		};
 
@@ -413,7 +632,7 @@ SCDocHTMLRenderer {
 			};
 		};
 
-		stream << "</div>\n";
+		stream << "\n</div>\n";
 	}
 
 	*renderChildren {|stream, node|
@@ -494,7 +713,7 @@ SCDocHTMLRenderer {
 			};
 
 			x = {
-				stream << "\n<h3 class='method-code'>"
+				stream << "<h3 class='method-code'>"
 				<< "<span class='method-prefix'>" << methodCodePrefix << "</span>"
 				<< "<a class='method-name' name='" << methodTypeIndicator << mname << "' href='"
 				<< baseDir << "/Overviews/Methods.html#"
@@ -530,17 +749,17 @@ SCDocHTMLRenderer {
 			m = m ?? m2;
 			m !? {
 				if(m.isExtensionOf(cls) and: {icls.isNil or: {m.isExtensionOf(icls)}}) {
-					stream << "\n<div class='extmethod'>From extension in <a href='"
+					stream << "<div class='extmethod'>From extension in <a href='"
 					<< URI.fromLocalPath(m.filenameSymbol.asString).asString << "'>"
 					<< m.filenameSymbol << "</a></div>\n";
 				} {
 					if(m.ownerClass == icls) {
-						stream << "\n<div class='supmethod'>From implementing class</div>\n";
+						stream << "<div class='supmethod'>From implementing class</div>\n";
 					} {
 						if(m.ownerClass != cls) {
 							m = m.ownerClass.name;
 							m = if(m.isMetaClassName) {m.asString.drop(5)} {m};
-							stream << "\n<div class='supmethod'>From superclass: <a href='"
+							stream << "<div class='supmethod'>From superclass: <a href='"
 							<< baseDir << "/Classes/" << m << ".html'>" << m << "</a></div>\n";
 						}
 					}
@@ -567,7 +786,7 @@ SCDocHTMLRenderer {
 		};
 
 		if(node.children.size > 1) {
-			stream << "\n<div class='method'>";
+			stream << "<div class='method'>";
 			this.renderChildren(stream, node.children[1]);
 			stream << "</div>\n";
 		};
@@ -581,51 +800,103 @@ SCDocHTMLRenderer {
 				if(noParBreak) {
 					noParBreak = false;
 				} {
-					stream << "\n<p>";
+					stream << "\n<p>\n";
 				};
 				this.renderChildren(stream, node);
 			},
 			\NL, { }, // these shouldn't be here..
 			// Plain text and modal tags
 			\TEXT, {
-				stream << SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text));
+				stream
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpecialChars(node.text)
+						)
+					)
+				);
 			},
 			\LINK, {
-				stream << this.htmlForLink(node.text);
+				var thisLink = this.htmlForLink(node.text);
+				stream
+				<< if (thisLink.contains("''>")) {
+					SCDocHTMLRenderer.replaceRegexp(thisLink, ".*''>", "")
+					.replace("'</a>", "'")
+				} {
+					thisLink
+				};
 			},
 			\CODEBLOCK, {
 				stream << "\n<textarea class='editor'>"
-				<< this.escapeSpecialChars(node.text)
+				<< SCDocHTMLRenderer.teletypeWithinCode(
+					SCDocHTMLRenderer.parseMathML(
+						this.escapeSpecialChars(node.text)
+					)
+				)
 				<< "</textarea>\n";
 			},
 			\CODE, {
-				stream << "<code>"
-				<< this.escapeSpecialChars(node.text)
-				<< "</code>";
+				stream << "\n<code>"
+				<< SCDocHTMLRenderer.teletypeWithinCode(
+					SCDocHTMLRenderer.parseMathML(
+						this.escapeSpecialChars(node.text)
+					)
+				)
+				<< "</code>\n";
 			},
 			\EMPHASIS, {
 				stream << "<em>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+					SCDocHTMLRenderer.renderNonCodePunctuation(
+						this.escapeSpecialChars(node.text)
+						)
+					)
+				)
 				<< "</em>";
 			},
 			\TELETYPEBLOCK, {
 				stream << "\n<pre>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpecialChars(node.text)
+						)
+					)
+				)
 				<< "</pre>\n";
 			},
 			\TELETYPE, {
 				stream << "<code>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
-				<< "</code>";
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpecialChars(node.text)
+						)
+					)
+				)
+				<< "</code>\n";
 			},
 			\STRONG, {
 				stream << "<strong>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpecialChars(node.text)
+						)
+					)
+				)
 				<< "</strong>";
 			},
 			\SOFT, {
 				stream << "<span class='soft'>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.parseHTML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpecialChars(node.text)
+						)
+					)
+				)
 				<< "</span>";
 			},
 			\ANCHOR, {
@@ -638,32 +909,36 @@ SCDocHTMLRenderer {
 			},
 			\IMAGE, {
 				f = node.text.split($#);
-				stream << "\n<div class='image'>";
+				stream << "<div class='image'>";
 				img = "<img src='" ++ f[0] ++ "'/>";
 				if(f[2].isNil) {
 					stream << img;
 				} {
 					stream << this.htmlForLink(f[2]++"#"++(f[3]?"")++"#"++img,false);
 				};
-				f[1] !? {
-					stream << "<br><b>"
-					<< SCDocHTMLRenderer.parenthesisForSmallFont(f[1])
-					<< "</b>"
-				}; // ugly..
-				stream << "</div>\n";
+				f[1] !? { stream << "<br><b>"
+					<< SCDocHTMLRenderer.parseMathML(
+						SCDocHTMLRenderer.parseHTML(
+							this.escapeSpecialChars(
+								SCDocHTMLRenderer.renderNonCodePunctuation(f[1])
+							)
+						)
+					)
+					<< "</b>" }; // ugly..
+				stream << "\n</div>\n";
 			},
 			// Other stuff
 			\NOTE, {
-				stream << "\n<div class='note'><span class='notelabel'>NOTE:</span> ";
+				stream << "<div class='note'><span class='notelabel'>NOTE:</span> ";
 				noParBreak = true;
 				this.renderChildren(stream, node);
-				stream << "</div>\n";
+				stream << "\n</div>";
 			},
 			\WARNING, {
-				stream << "\n<div class='warning'><span class='warninglabel'>WARNING:</span> ";
+				stream << "<div class='warning'><span class='warninglabel'>WARNING:</span> ";
 				noParBreak = true;
 				this.renderChildren(stream, node);
-				stream << "</div>\n";
+				stream << "\n</div>";
 			},
 			\FOOTNOTE, {
 				footNotes = footNotes.add(node);
@@ -676,28 +951,28 @@ SCDocHTMLRenderer {
 				<< "</sup></a> ";
 			},
 			\CLASSTREE, {
-				stream << "<ul class='tree'>";
+				stream << "\n<ul class='tree'>";
 				this.renderClassTree(stream, node.text.asSymbol.asClass);
-				stream << "</ul>";
+				stream << "</ul>\n";
 			},
 			// Lists and tree
 			\LIST, {
-				stream << "<ul>\n";
+				stream << "\n<ul>\n";
 				this.renderChildren(stream, node);
 				stream << "</ul>\n";
 			},
 			\TREE, {
-				stream << "<ul class='tree'>\n";
+				stream << "\n<ul class='tree'>\n";
 				this.renderChildren(stream, node);
 				stream << "</ul>\n";
 			},
 			\NUMBEREDLIST, {
-				stream << "<ol>\n";
+				stream << "\n<ol>\n";
 				this.renderChildren(stream, node);
 				stream << "</ol>\n";
 			},
 			\ITEM, { // for LIST, TREE and NUMBEREDLIST
-				stream << "<li>";
+				stream << "\n<li>";
 				noParBreak = true;
 				this.renderChildren(stream, node);
 			},
@@ -722,16 +997,16 @@ SCDocHTMLRenderer {
 			},
 			// Tables
 			\TABLE, {
-				stream << "<table>\n";
+				stream << "\n<table>";
 				this.renderChildren(stream, node);
 				stream << "</table>\n";
 			},
 			\TABROW, {
-				stream << "<tr>";
+				stream << "\n<tr>";
 				this.renderChildren(stream, node);
 			},
 			\TABCOL, {
-				stream << "<td>";
+				stream << "\n<td>";
 				noParBreak = true;
 				this.renderChildren(stream, node);
 			},
@@ -830,13 +1105,13 @@ SCDocHTMLRenderer {
 				this.renderChildren(stream, node);
 			},
 			\RETURNS, {
-				stream << "\n<h4>Returns:</h4>\n<div class='returnvalue'>";
+				stream << "<h4>Returns:</h4>\n<div class='returnvalue'>";
 				this.renderChildren(stream, node);
-				stream << "</div>\n";
+				stream << "\n</div>\n";
 
 			},
 			\DISCUSSION, {
-				stream << "\n<h4>Discussion:</h4>\n";
+				stream << "<h4>Discussion:</h4>\n";
 				this.renderChildren(stream, node);
 			},
 			// Sections
@@ -863,26 +1138,38 @@ SCDocHTMLRenderer {
 			\SECTION, {
 				stream << "\n<h2><a class='anchor' name='" << this.escapeSpacesInAnchor(node.text)
 				<< "'>"
-				<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(node.text))
+				<< SCDocHTMLRenderer.parseMathML(
+					SCDocHTMLRenderer.renderNonCodePunctuation(
+						this.escapeSpecialChars(node.text)
+					)
+				)
 				<< "</a></h2>\n";
 				if(node.makeDiv.isNil) {
 					this.renderChildren(stream, node);
 				} {
-					stream << "\n<div id='" << node.makeDiv << "'>";
+					stream << "<div id='" << node.makeDiv << "'>";
 					this.renderChildren(stream, node);
-					stream << "</div>\n";
+					stream << "\n</div>\n";
 				};
 			},
 			\SUBSECTION, {
 				if(this.escapeSpacesInAnchor(node.text)[0..4] == ":sub:") {
 					stream << "\n<h4><a class='anchor' name='" << this.escapeSpacesInAnchor(node.text)
 					<< "'>"
-					<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpacesInAnchor(node.text)[5..])
+					<< SCDocHTMLRenderer.parseMathML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpacesInAnchor(node.text)[5..]
+						)
+					)
 					<< "</a></h4>\n"
 				} {
 					stream << "\n<h3><a class='anchor' name='" << this.escapeSpacesInAnchor(node.text)
 					<< "'>"
-					<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpacesInAnchor(node.text))
+					<< SCDocHTMLRenderer.parseMathML(
+						SCDocHTMLRenderer.renderNonCodePunctuation(
+							this.escapeSpacesInAnchor(node.text)
+						)
+					)
 					<< "</a></h3>\n"
 				};
 				if(node.makeDiv.isNil) {
@@ -950,25 +1237,25 @@ SCDocHTMLRenderer {
 
 					\SECTION, {
 						stream << "<li class='toc1'><a href='#" << this.escapeSpacesInAnchor(n.text) << "'>"
-						<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(n.text))
+						<< SCDocHTMLRenderer.renderNonCodePunctuation(this.escapeSpecialChars(n.text))
 						<< "</a></li>\n";
 						this.renderTOC(stream, n);
 					},
 					\SUBSECTION, {
 						if(this.escapeSpacesInAnchor(n.text)[0..4] == ":sub:") {
 							stream << "<li class='toc2'><a href='#" << this.escapeSpacesInAnchor(n.text) << "'>  "
-							<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpacesInAnchor(n.text)[5..])
+							<< SCDocHTMLRenderer.renderNonCodePunctuation(this.escapeSpacesInAnchor(n.text)[5..])
 							<< "</a></li>\n"
 						} {
 							stream << "<li class='toc2'><a href='#" << this.escapeSpacesInAnchor(n.text) << "'>"
-							<< SCDocHTMLRenderer.parenthesisForSmallFont(this.escapeSpecialChars(n.text))
+							<< SCDocHTMLRenderer.renderNonCodePunctuation(this.escapeSpecialChars(n.text))
 							<< "</a></li>\n"
 						};
 						this.renderTOC(stream, n);
 					}
 				);
 			};
-			stream << "</ul>";
+			stream << "</ul>\n";
 		};
 	}
 
@@ -996,7 +1283,7 @@ SCDocHTMLRenderer {
 		var name, doc, desc = "";
 		name = cls.name.asString;
 		doc = SCDoc.documents["Classes/"++name];
-		doc !? { desc = " - "++doc.summary };
+		doc !? { desc = " - "++SCDocHTMLRenderer.renderNonCodePunctuation(doc.summary) };
 		if(cls.name.isMetaClassName, {^this});
 		stream << "<li> <a href='" << baseDir << "/Classes/" << name << ".html'>"
 		<< name << "</a>" << desc << "\n";
@@ -1012,29 +1299,29 @@ SCDocHTMLRenderer {
 
 	*renderFootNotes {|stream|
 		if(footNotes.notNil) {
-			stream << "\n<div class='footnotes'>\n";
+			stream << "<div class='footnotes'>\n";
 			footNotes.do {|n,i|
-				stream << "<a class='anchor' name='footnote_" << (i+1) << "'/>\n<div class='footnote'>"
+				stream << "<a class='anchor' name='footnote_" << (i+1) << "'/><div class='footnote'>"
 				<< "[<a href='#footnote_org_" << (i+1) << "'>" << (i+1) << "</a>] - ";
 				noParBreak = true;
 				this.renderChildren(stream, n);
-				stream << "</div>\n";
+				stream << "\n</div>\n";
 			};
-			stream << "</div>\n";
+			stream << "\n</div>\n";
 		};
 	}
 
 	*renderFooter {|stream, doc|
-		stream << "\n<div class='doclink'>";
+		stream << "<div class='doclink'>";
 		doc.fullPath !? {
 			stream << "helpfile source: <a href='" << URI.fromLocalPath(doc.fullPath).asString << "'>"
 			<< doc.fullPath << "</a><br>"
 		};
 		stream << "link::" << doc.path << "::<br>"
-		<< "</div>\n"
-		<< "</div>\n"
+		<< "\n</div>\n"
+		<< "\n</div>\n"
 		<< "<script src='" << baseDir << "/editor.js' type='text/javascript'></script>\n"
-		<< "</body></html>";
+		<< "</body>\n</html>";
 	}
 
 	*renderOnStream {|stream, doc, root|
@@ -1067,212 +1354,14 @@ SCDocHTMLRenderer {
 	}
 
 	*renderToFile {|filename, doc, root|
-		var stream, streamedText, replaceRegexp;
+		var stream;
 		File.mkdir(filename.dirname);
 		stream = File(filename, "w");
-
-		replaceRegexp = { |source, findRegexp, replace|
-			var founds, replaced;
-			founds = source.findRegexp(findRegexp);
-			founds = if(findRegexp[0] == $^) {
-				founds.collect { |array| if (array[0] == 0) {array} {} }
-			} {
-				founds
-			};
-			while { founds.includes(nil) } { founds.remove(nil) };
-			founds = founds.asSet.asArray.sort({ |a, b| a[0] < b[0] });
-			replaced = source;
-			if(founds.size > 0) {
-				founds.reverse.do { |idx_str|
-					var foundIndex, foundString;
-					#foundIndex, foundString = idx_str;
-					replaced = if (foundIndex > 0) {
-						var lastString = replaced[foundIndex + foundString.size ..];
-						lastString = if(lastString != nil) { lastString } { "" };
-						replaced[0 .. foundIndex - 1] ++ replace ++ lastString
-					} {
-						replace ++ replaced[foundString.size ..]
-					}
-				}
-			} {
-				replaced
-			};
-			replaced
-		};
-
 		if(stream.isOpen) {
 			this.renderOnStream(stream, doc, root);
 			stream.close;
-
-			stream = File(filename, "r");
-			streamedText = stream.readAllString;
-			stream.close;
-
-			streamedText = streamedText
-
-			// paragraph, line height:
-			.replace("&lt;p&gt;", "<p>")
-			.replace("&lt;p style='line-height:", "<p style='line-height:")
-			.replace("&lt;/p&gt;", "</p>")
-
-			// horizontal line:
-			.replace("&lt;hr&gt;", "<hr>")
-
-			// small text:
-			.replace("&lt;small&gt;", "<small>")
-			.replace("&lt;/small&gt;", "</small>")
-
-			// italic:
-			.replace("&lt;em&gt;", "<em>")
-			.replace("&lt;/em&gt;", "</em>")
-			.replace("em'&gt;", "em'>")
-
-			// bold:
-			.replace("&lt;strong&gt;", "<strong>")
-			.replace("&lt;/strong&gt;", "</strong>")
-
-			// subscript and superscript:
-			.replace("&lt;sub&gt;", "<sub>")
-			.replace("&lt;/sub&gt;", "</sub>")
-			.replace("&lt;sup&gt;", "<sup>")
-			.replace("&lt;/sup&gt;", "</sup>")
-
-			// iframe::
-			.replace("&lt;iframe", "<iframe")
-			.replace("&lt;/iframe&gt;", "</iframe>")
-			.replace("src='<a href='", "src='")
-			.replace("''>http", "'>http")
-			.replace("'</a> title='", " title='")
-			.replace("'</a> type=", " type=")
-			.replace("'&gt; <source src='", "'> <source src='")
-
-			// audio:
-			.replace("&lt;audio controls autoplay&gt;", "<audio controls autoplay>")
-			.replace("&lt;audio controls&gt;", "<audio controls>")
-			.replace("&lt;source src=", "<source src=")/*
-			.replace("/wav'&gt;", "/wav'>")
-			.replace("/aiff'&gt;", "/aiff'>")
-			.replace("/flac'&gt;", "/flac'>")
-			.replace("/ogg'&gt;", "/ogg'>")
-			.replace("/mpeg'&gt;", "/mpeg'>")
-			.replace("/mp4'&gt;", "/mp4'>")
-			.replace("/x-ms-wma'&gt;", "/x-ms-wma'>")*/
-			.replace("&lt;/audio&gt;", "</audio>")
-
-			// video:
-			.replace("&lt;video controls autoplay&gt;", "<video controls autoplay>")
-			.replace("&lt;video controls&gt;", "<video controls>")
-			.replace("&lt;video controls width=", "<video controls width=")
-			.replace("&lt;/video&gt;", "</video>")
-
-			// table:
-			.replace("&lt;table&gt;", "<table>")
-			.replace("&lt;table ", "<table ")
-			.replace("&lt;/table&gt;", "</table>")
-			.replace("&lt;caption&gt;", "<caption>")
-			.replace("&lt;/caption&gt;", "</caption>")
-			.replace("&lt;thead&gt;", "<thead>")
-			.replace("&lt;/thead&gt;", "</thead>")
-			.replace("&lt;tr&gt;", "<tr>")
-			.replace("&lt;/tr&gt;", "</tr>")
-			.replace("&lt;th scope='col'&gt;", "<th scope='col'>")
-			.replace("&lt;th scope='row'&gt;", "<th scope='row'>")
-			.replace("&lt;th ", "<th ")
-			.replace("&lt;/th&gt;", "</th>")
-			.replace("&lt;tbody&gt;", "<tbody>")
-			.replace("&lt;/tbody&gt;", "</tbody>")
-			.replace("&lt;/tbody&gt;", "</tbody>")
-			.replace("&lt;td&gt;", "<td>")
-			.replace("&lt;td", "<td")
-			.replace("&lt;/td&gt;", "</td>")
-
-			// mathjax ->
-			// .replace("&lt;script type='text/x-mathjax-config'&gt;", "<script type='text/x-mathjax-config'>")
-			// .replace("&lt;/script&gt;", "</script>")
-
-			// MathML ->
-			.replace("&lt;annotation&gt;", "<annotation>")
-			.replace("&lt;/annotation&gt;", "</annotation>")
-			.replace("&lt;apply&gt;", "<apply>")
-			.replace("&lt;/apply&gt;", "</apply>")
-			.replace("&lt;ci&gt;", "<ci>")
-			.replace("&lt;/ci&gt;", "</ci>")
-			.replace("&lt;cn&gt;", "<cn>")
-			.replace("&lt;/cn&gt;", "</cn>")
-			.replace("&lt;condition&gt;", "<condition>")
-			.replace("&lt;/condition&gt;", "</condition>")
-			.replace("&lt;diff&gt;", "<diff>")
-			.replace("&lt;/diff&gt;", "</diff>")
-			.replace("&lt;int&gt;", "<int>")
-			.replace("&lt;/int&gt;", "</int>")
-			.replace("&lt;lambda&gt;", "<lambda>")
-			.replace("&lt;/lambda&gt;", "</lambda>")
-			.replace("&lt;limit&gt;", "<limit>")
-			.replace("&lt;/limit&gt;", "</limit>")
-			.replace("&lt;list&gt;", "<list>")
-			.replace("&lt;/list&gt;", "</list>")
-			.replace("&lt;math&gt;", "<math>")
-			.replace("&lt;/math&gt;", "</math>")
-			.replace("&lt;matrix&gt;", "<matrix>")
-			.replace("&lt;/matrix&gt;", "</matrix>")
-			.replace("&lt;mfenced&gt;", "<mfenced>")
-			.replace("&lt;mfenced", "<mfenced")
-			.replace("&lt;/mfenced&gt;", "</mfenced>")
-			.replace("&lt;mfrac&gt;", "<mfrac>")
-			.replace("&lt;/mfrac&gt;", "</mfrac>")
-			.replace("&lt;mi&gt;", "<mi>")
-			.replace("&lt;/mi&gt;", "</mi>")
-			.replace("&lt;mn&gt;", "<mn>")
-			.replace("&lt;/mn&gt;", "</mn>")
-			.replace("&lt;mo&gt;", "<mo>")
-			.replace("&lt;/mo&gt;", "</mo>")
-			.replace("&lt;mrow&gt;", "<mrow>")
-			.replace("&lt;/mrow&gt;", "</mrow>")
-			.replace("&lt;msqrt&gt;", "<msqrt>")
-			.replace("&lt;/msqrt&gt;", "</msqrt>")
-			.replace("&lt;msub&gt;", "<msub>")
-			.replace("&lt;/msub&gt;", "</msub>")
-			.replace("&lt;msubsup&gt;", "<msubsup>")
-			.replace("&lt;/msubsup&gt;", "</msubsup>")
-			.replace("&lt;msup&gt;", "<msup>")
-			.replace("&lt;/msup&gt;", "</msup>")
-			.replace("&lt;mtext&gt;", "<mtext>")
-			.replace("&lt;/mtext&gt;", "</mtext>")
-			.replace("&lt;product&gt;", "<product>")
-			.replace("&lt;/product&gt;", "</product>")
-			.replace("&lt;semantics&gt;", "<semantics>")
-			.replace("&lt;/semantics&gt;", "</semantics>")
-			.replace("&lt;set&gt;", "<set>")
-			.replace("&lt;/set&gt;", "</set>")
-			.replace("&lt;sum&gt;", "<sum>")
-			.replace("&lt;/sum&gt;", "</sum>")/*
-			.replace("&lt;table&gt;", "<table>")
-			.replace("&lt;/table&gt;", "</table>")*/
-			.replace("&lt;tendsto&gt;", "<tendsto>")
-			.replace("&lt;/tendsto&gt;", "</tendsto>")
-			.replace("&lt;vector&gt;", "<vector>")
-			.replace("&lt;/vector&gt;", "</vector>")
-			/*
-			.replace(
-			"&lt;math xmlns='<a href=" ++ "http://www.w3.org/1998/Math/MathML'>".quote ++ ">http://www.w3.org/1998/Math/MathML'&gt;</a>",
-			"<math xmlns='http://www.w3.org/1998/Math/MathML'>")*/
-			.replace("&amp;part;", "&part;");
-			/*
-			.replace(")'&gt;", ")'>")
-			.replace("]'&gt;", "]'>")
-			.replace("}'&gt;", "}'>")*/
-
-			// empty line
-			streamedText = replaceRegexp.(streamedText, "(?<!'|')&lt;br&gt;(?!'|')", "<br>");
-
-			// '&gt; to > (only > converted using this method)'&gt;
-			streamedText = replaceRegexp.(streamedText, "(?<!n)'&gt;(?!'|=|&|\n|NOTE:&lt;|WARNING:&lt;|Description&lt;)", "'>");
-
-			stream = File(filename, "w");
-			stream << streamedText;
-			stream.close
 		} {
 			warn("SCDoc: Could not open file % for writing".format(filename));
-		};
+		}
 	}
 }

@@ -1,7 +1,7 @@
 title:: Writing Help
 summary:: Get started with writing help
 categories:: HelpSystem
-related:: Reference/SCDocSyntax, Classes/SCDoc, Guides/WritingHelp_HTML_LaTeX_MathML
+related:: Reference/SCDocSyntax, Classes/SCDoc, Guides/WritingHelp_Punctuation_HTML_LaTeX_MathML
 
 section:: Writing new help
 The simplest way is to look at an existing help file or class document, and read this document and link::Reference/SCDocSyntax::
@@ -297,7 +297,7 @@ The easiest way to contribute to the documentation is:
     3. Create a branch for doc updates
     code::
     git checkout -b doc_updates
-    ::
+    ::  D
     4. Do your update, commit your changes and push to github
     code::
     git push origin -u doc_updates
