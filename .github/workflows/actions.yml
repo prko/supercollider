@@ -196,8 +196,8 @@ jobs:
         include:
 
           - job-name: 'universal'
-            os-version: '11'
-            xcode-version: '12.4'
+            os-version: '12'
+            xcode-version: '13.4.1'
             deployment-target: '10.14'
             cmake-architectures: 'x86_64;arm64'
             use-syslibs: false
@@ -210,8 +210,8 @@ jobs:
             verify-app: true
 
           - job-name: 'x64 legacy'
-            os-version: '11'
-            xcode-version: '12.4'
+            os-version: '12'
+            xcode-version: '13.4.1'
             qt-version: '5.9.9' # will use qt from aqtinstall
             deployment-target: '10.11'
             cmake-architectures: x86_64
@@ -219,6 +219,7 @@ jobs:
             shared-libscsynth: false
             build-libsndfile: true
             system-portaudio: false
+            build-fftw: true
             vcpkg-triplet: x64-osx-release-supercollider # required for build-libsndfile
             artifact-suffix: 'macOS-x64-legacy' # set if needed - will trigger artifact upload
 
@@ -247,6 +248,7 @@ jobs:
       HOMEBREW_NO_ANALYTICS: 1
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
+      HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
       USE_SYSLIBS: ${{ matrix.use-syslibs }}
       SHARED_LIBSCSYNTH: ${{ matrix.shared-libscsynth }}
       ARTIFACT_FILE: 'SuperCollider-${{ needs.lint.outputs.sc-version }}-${{ matrix.artifact-suffix }}.dmg'
@@ -304,7 +306,7 @@ jobs:
           # install universal versions of homebrew libraries
           if [[ "${{ matrix.cmake-architectures }}" != "x86_64" ]]; then
               echo "Downloading script for creating universal binaries from homebrew packages"
-              curl -O -J -L https://gist.githubusercontent.com/dyfer/6c83905d4593750105897e51e87ec345/raw/18f34a3def7dff91f34b30c17a4ccd50b4df264d/brew-install-universal.sh
+              curl -O -J -L https://gist.githubusercontent.com/dyfer/6c83905d4593750105897e51e87ec345/raw/1f89f2fe767a2e637387e74f0c8dcc86a0963f60/brew-install-universal.sh
               chmod +x brew-install-universal.sh
               if [[ "${{ matrix.build-libsndfile }}" != "true" ]]; then ./brew-install-universal.sh libsndfile; fi
               if [[ "${{ matrix.build-readline }}" != "true" ]]; then ./brew-install-universal.sh readline; fi
@@ -537,9 +539,7 @@ jobs:
       - name: build
         shell: bash
         run: |
-          BUILD_PARALLELISM=
-          if [[ ${{ startsWith(matrix.cmake-generator, 'MinGW') }} == true ]]; then BUILD_PARALLELISM="-- -j2"; fi
-          cmake --build $BUILD_PATH --config Release --target install $BUILD_PARALLELISM
+          cmake --build $BUILD_PATH --config Release --target install --parallel 2
       - name: create archive
         if: matrix.artifact-suffix
         shell: bash
@@ -570,7 +570,7 @@ jobs:
         include:
 
           - name: macOS
-            runs-on: macos-11
+            runs-on: macos-12
             sclang: 'build/Install/SuperCollider/SuperCollider.app/Contents/MacOS/sclang'
             artifact-suffix: macOS-universal
             artifact-extension: '.dmg'
