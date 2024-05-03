@@ -27,7 +27,7 @@ See the [Raspberry Pi](README_RASPBERRY_PI.md) and [BeagleBone Black](README_BEA
 
 SuperCollider is tested with:
 - Windows 10 (32- and 64-bit) and MSVC 2019
-- macOS 11 and Xcode 12.4
+- macOS 12 and Xcode 13.4.1
 - Ubuntu 22.04 and gcc 12
 
 SuperCollider is known to support these platforms:
@@ -68,10 +68,9 @@ We recommend the following resources for learning SC:
 
 Discuss
 -------
+You can join our forum at [scsynth.org][Discourse] or our [Slack channel][Slack].
 
-You can [sign up for mailing lists][list signup], and view the archives for [sc-users][sc-users archives] and [sc-dev][sc-dev archives].
-
-We also have a [forum][Discourse] and a [Slack chat][Slack].
+You can also view the archives for the old mailing lists at [sc-users][sc-users archives] and [sc-dev][sc-dev archives].
 
 Please read our adopted [code of conduct](CODE_OF_CONDUCT.md), which applies to all the above communities.
 
