@@ -380,11 +380,13 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
     if (!selected.isEmpty()) {
         Main::scProcess()->evaluateCode(selected);
     } else {
+        mLoadProgressIndicator->stop();
         mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [this](QVariant res) {
             QString selectionResult = res.toString();
             if (!selectionResult.isEmpty()) {
                 Main::scProcess()->evaluateCode(selectionResult);
             }
+            mLoadProgressIndicator->stop(); 
         });
     }
 }
