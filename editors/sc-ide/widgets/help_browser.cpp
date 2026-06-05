@@ -95,7 +95,7 @@ HelpBrowser::HelpBrowser(QWidget* parent): QWidget(parent) {
     layout->addWidget(mWebView);
     setLayout(layout);
 
-    // connect(mWebView, &WebView::loadStarted, mLoadProgressIndicator, [=]() { mLoadProgressIndicator->start(); });
+    connect(mWebView, &WebView::loadStarted, mLoadProgressIndicator, [=]() { mLoadProgressIndicator->start(); });
     connect(mWebView, &WebView::loadFinished, this, &HelpBrowser::onPageLoad);
     connect(mWebView, &WebView::customContextMenuRequested, this, &HelpBrowser::onContextMenuRequest);
 
@@ -345,7 +345,7 @@ void HelpBrowser::sendRequest(const QString& code) {
     }
 
     qDebug() << "sending request...";
-    // mLoadProgressIndicator->start(tr("Sending request"));
+    mLoadProgressIndicator->start(tr("Sending request"));
     Main::scProcess()->evaluateCode(code, true);
 }
 
@@ -382,6 +382,7 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
             if (!selectionResult.isEmpty()) {
                 Main::scProcess()->evaluateCode(selectionResult);
             }
+            mLoadProgressIndicator->stop();
         });
     }
 }
