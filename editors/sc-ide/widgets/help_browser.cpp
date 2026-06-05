@@ -345,7 +345,7 @@ void HelpBrowser::sendRequest(const QString& code) {
     }
 
     qDebug() << "sending request...";
-    mLoadProgressIndicator->start(tr("Sending request"));
+    // mLoadProgressIndicator->start(tr("Sending request"));
     Main::scProcess()->evaluateCode(code, true);
 }
 
