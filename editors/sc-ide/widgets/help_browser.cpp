@@ -351,24 +351,21 @@ void HelpBrowser::sendRequest(const QString& code) {
 
 void HelpBrowser::onScResponse(const QString& command, const QString& data) {
     const QString openHelpUrlString = "openHelpUrl";
-
     if (command != openHelpUrlString)
         return;
-
     qDebug() << "HelpBrowser: got response:" << data;
-
     mLoadProgressIndicator->stop();
-
     QString urlString = data;
     // undress YAML string:
     urlString.remove(0, 1).chop(1);
 
-    mWebView->load(urlString);
+    if (mWebView->url().toString() != urlString) {
+        mWebView->load(urlString);
+    }
 
     HelpBrowserDocklet* helpDock = MainWindow::instance()->helpBrowserDocklet();
     if (helpDock)
         helpDock->focus();
-
     emit urlChanged();
 }
 
