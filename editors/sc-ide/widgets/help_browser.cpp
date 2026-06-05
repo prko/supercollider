@@ -359,9 +359,7 @@ void HelpBrowser::onScResponse(const QString& command, const QString& data) {
     // undress YAML string:
     urlString.remove(0, 1).chop(1);
 
-    if (mWebView->url().toString() != urlString) {
-        mWebView->load(urlString);
-    }
+    // mWebView->load(urlString);
 
     HelpBrowserDocklet* helpDock = MainWindow::instance()->helpBrowserDocklet();
     if (helpDock)
