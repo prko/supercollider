@@ -385,8 +385,8 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
             QString selectionResult = res.toString();
             if (!selectionResult.isEmpty()) {
                 Main::scProcess()->evaluateCode(selectionResult);
-            };
-            mLoadProgressIndicator->stop(); 
+            }
+            mLoadProgressIndicator->stop();
         });
     }
 }
