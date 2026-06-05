@@ -375,6 +375,7 @@ void HelpBrowser::onScResponse(const QString& command, const QString& data) {
 void HelpBrowser::evaluateSelection(bool evaluateRegion) {
     static const QString jsSelectLine("selectLine()");
     static const QString jsSelectRegion("selectRegion()");
+
     QString selected = mWebView->selectedText();
     if (!selected.isEmpty()) {
         Main::scProcess()->evaluateCode(selected);
