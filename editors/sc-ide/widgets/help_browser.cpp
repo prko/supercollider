@@ -95,7 +95,7 @@ HelpBrowser::HelpBrowser(QWidget* parent): QWidget(parent) {
     layout->addWidget(mWebView);
     setLayout(layout);
 
-    connect(mWebView, &WebView::loadStarted, mLoadProgressIndicator, [=]() { mLoadProgressIndicator->start(); });
+    // connect(mWebView, &WebView::loadStarted, mLoadProgressIndicator, [=]() { mLoadProgressIndicator->start(); });
     connect(mWebView, &WebView::loadFinished, this, &HelpBrowser::onPageLoad);
     connect(mWebView, &WebView::customContextMenuRequested, this, &HelpBrowser::onContextMenuRequest);
 
@@ -380,15 +380,12 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
     if (!selected.isEmpty()) {
         Main::scProcess()->evaluateCode(selected);
     } else {
-        mLoadProgressIndicator->stop();
         mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [this](QVariant res) {
             QString selectionResult = res.toString();
             if (!selectionResult.isEmpty()) {
                 Main::scProcess()->evaluateCode(selectionResult);
             }
-            mLoadProgressIndicator->stop();
         });
-        mLoadProgressIndicator->stop();
     }
 }
 
