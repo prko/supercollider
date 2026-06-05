@@ -388,6 +388,7 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
             }
             mLoadProgressIndicator->stop();
         });
+        mLoadProgressIndicator->stop();
     }
 }
 
