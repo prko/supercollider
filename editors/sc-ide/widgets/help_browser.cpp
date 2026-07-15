@@ -191,10 +191,10 @@ void HelpBrowser::createActions() {
     mActions[Forward] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Forward));
     mActions[Reload] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Reload));
 
-    // Ensure Ctrl+R (Windows/Linux) and Cmd+R (macOS) explicitly trigger Reload using strings
+    // Ensure F5 (QKeySequence::Refresh), Ctrl+R (Windows/Linux), and Cmd+R (macOS) all trigger Reload
     QList<QKeySequence> reloadShortcuts;
     reloadShortcuts.append(QKeySequence::Refresh);
-    reloadShortcuts.append(QKeySequence("Ctrl+R"));
+    reloadShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_R));
     mActions[Reload]->setShortcuts(reloadShortcuts);
 }
 
@@ -203,18 +203,19 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Ensure consistent Zoom In across all platforms, explicit string mapping for all layouts
+    // Ensure consistent Zoom In across all platforms.
+    // Use Qt enums instead of strings to avoid parsing failures on different keyboard layouts.
     QList<QKeySequence> zoomInShortcuts;
     zoomInShortcuts.append(QKeySequence::ZoomIn);
-    zoomInShortcuts.append(QKeySequence("Ctrl+="));
-    zoomInShortcuts.append(QKeySequence("Ctrl++"));
-    zoomInShortcuts.append(QKeySequence("Ctrl+Shift+="));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
     mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
 
     // Ensure consistent Zoom Out across all platforms
     QList<QKeySequence> zoomOutShortcuts;
     zoomOutShortcuts.append(QKeySequence::ZoomOut);
-    zoomOutShortcuts.append(QKeySequence("Ctrl+-"));
+    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
     mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
@@ -337,22 +338,28 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
             break;
         }
         case QEvent::KeyPress: {
-            // QWebEngineView often swallows ShortcutOverride. Directly catch KeyPress to ensure 100% blocking.
             QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
             Qt::KeyboardModifiers mods = keyEvent->modifiers();
+            int key = keyEvent->key();
 
-            // Trigger only when Ctrl (Windows/Linux) or Cmd (macOS) is held.
-            // Exclude Alt and Meta (which maps to the physical Ctrl key on macOS).
+            // Intercept F5 for Refresh (ensure Alt/Meta aren't held down)
+            if (key == Qt::Key_F5 && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
+                mActions[Reload]->trigger();
+                event->accept();
+                return true;
+            }
+
+            // Intercept Ctrl/Cmd based shortcuts. Allow Shift to support Ctrl+Shift+=
             if ((mods & Qt::ControlModifier) && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
-                if (keyEvent->key() == Qt::Key_R) {
+                if (key == Qt::Key_R) {
                     mActions[Reload]->trigger();
                     event->accept();
                     return true;
-                } else if (keyEvent->key() == Qt::Key_Equal || keyEvent->key() == Qt::Key_Plus) {
+                } else if (key == Qt::Key_Equal || key == Qt::Key_Plus) {
                     mActions[ZoomIn]->trigger();
                     event->accept();
                     return true;
-                } else if (keyEvent->key() == Qt::Key_Minus) {
+                } else if (key == Qt::Key_Minus) {
                     mActions[ZoomOut]->trigger();
                     event->accept();
                     return true;
