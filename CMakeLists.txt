@@ -83,7 +83,7 @@ option(USE_CCACHE "Use ccache if available." ON)
 
 option(FFT_GREEN "Use internal 'Green' FFT lib rather than FFTW. (Not recommended.)" OFF)
 
-set(AUDIOAPI "default" CACHE STRING "Audio API to use (one of {default,coreaudio,jack,portaudio,bela})")
+set(AUDIOAPI "default" CACHE STRING "Audio API to use (one of {default,coreaudio,jack,portaudio,bela,webaudio})")
 
 if (AUDIOAPI STREQUAL jack)
 	# here we check for JACK metadata API
@@ -96,6 +96,7 @@ if (AUDIOAPI STREQUAL jack)
 endif()
 
 option(LIBSCSYNTH "Compile libscsynth as shared library" OFF)
+option(STATIC_PLUGINS "Compile plugins as static libraries (scsynth only)" OFF)
 
 option(INSTALL_HELP "Install help docs and examples along with the software" ON)
 option(SC_DOC_RENDER "Pre-render SCDoc documentation. (For putting online, etc)" OFF)
@@ -175,6 +176,14 @@ if(SC_DISABLE_XCODE_CODESIGNING)
     set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
 endif()
 
+if(EMSCRIPTEN)
+    # see # see https://developer.chrome.com/blog/wasm-debugging-2020
+    set(WASM_DEBUG OFF CACHE BOOL "include DWARF debug symbols in wasm build?")
+    set(WASM_ASSET_DIR ${CMAKE_SOURCE_DIR}/platform/wasm)
+    set(WASM_DIST_DIR ${CMAKE_BINARY_DIR}/wasm-dist)
+endif()
+
+
 #############################################
 # Detect CCache
 
@@ -237,7 +246,7 @@ endif()
 #############################################
 # some default libraries
 
-if (NOT WIN32)
+if (NOT WIN32 AND NOT EMSCRIPTEN)
     find_package(Pthreads)
 
     if (NOT PTHREADS_FOUND)

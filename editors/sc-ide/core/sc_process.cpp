@@ -160,7 +160,7 @@ void ScProcess::startLanguage(void) {
     };
     emit scPost(tr("Starting interpreter with \"") + startMessageContent + "\" in \"" + workingDirectory + "\"\n");
 
-    QProcess::start(sclangCommand, sclangArguments);
+    QProcess::start(sclangCommand, sclangArguments, QIODevice::ReadWrite | QIODevice::Text);
     bool processStarted = QProcess::waitForStarted();
     if (!processStarted)
         emit statusMessage(tr("Failed to start interpreter!"));
@@ -368,6 +368,13 @@ void ScProcess::onResponse(const QString& selector, const QString& data) {
     else if (selector == QStringLiteral("classLibraryRecompiled")) {
         mCompiled = true;
         emit classLibraryRecompiled();
+
+        // bring the ide window to focus
+        static bool firstStart = true;
+        if (firstStart && MainWindow::instance()) {
+            MainWindow::instance()->raise();
+            firstStart = false;
+        }
     }
 
     else if (selector == QStringLiteral("requestCurrentPath"))

@@ -68,6 +68,7 @@ struct PyrSymbolArray : public PyrObjectHdr {
     PyrSymbol* symbols[1];
 };
 
+extern struct PyrClass* class_abstract_object;
 extern struct PyrClass* class_object;
 extern struct PyrClass* class_array;
 extern struct PyrClass *class_list, *class_method, *class_fundef, *class_frame, *class_class;
@@ -99,6 +100,7 @@ extern struct PyrClass* class_finalizer;
 extern struct PyrClass* class_server_shm_interface;
 
 extern PyrSymbol* s_none;
+extern PyrSymbol* s_abstract_object;
 extern PyrSymbol* s_object;
 extern PyrSymbol* s_bag;
 extern PyrSymbol* s_set;
@@ -145,7 +147,7 @@ extern PyrSymbol* s_performList;
 extern PyrSymbol* s_superPerformList;
 extern PyrSymbol* s_performArgs;
 extern PyrSymbol *s_new, *s_ref;
-extern PyrSymbol *s_synth, *s_environment, *s_event;
+extern PyrSymbol *s_synth, *s_environment, *s_event, *s_proto_object;
 extern PyrSymbol* s_interpreter;
 extern PyrSymbol* s_finalizer;
 extern PyrSymbol* s_awake;

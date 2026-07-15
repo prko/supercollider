@@ -131,8 +131,12 @@ enum struct TokenType : unsigned int {
     // errors
     START_OF_ERRORS = END_OF_COMMENTS,
         ErUnexpected = START_OF_ERRORS,
+        ErUnexpectedUnicode,
         ErSymbolQuoteUnclosed,
         ErMultilineCommentUnclosed,
+        ErASCIIInvalidWhitespace,
+        ErASCIIEOF,
+        ErASCIINotASCII,
         ErStringUnclosed,
         ErMissingExponent,
         ErInvalidToken,

@@ -1,7 +1,5 @@
 if(NOT NO_LIBSNDFILE)
 	find_package(Sndfile)
-else()
-	add_definitions("-DNO_LIBSNDFILE")
 endif()
 
 include_directories(
@@ -80,7 +78,8 @@ if(BELA_FOUND)
     add_library(BelaUGens MODULE
         BelaUGens.cpp
     )
-    add_definitions("-DSC_BELA" ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
+    target_compile_definitions(BelaUGens PRIVATE SC_BELA)
+	target_compile_options(BelaUGens PRIVATE ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
     include_directories(${XENOMAI_INCLUDE_DIRS} ${BELA_INCLUDE_DIRS})
     target_link_libraries(BelaUGens PRIVATE ${XENOMAI_LIBRARIES} ${BELA_LIBRARIES})
 
@@ -89,9 +88,11 @@ endif()
 
 if(NOT NO_X11)
 	if (APPLE)
-		add_library(UIUGens MODULE UIUGens.mm)
+		set(ui_sources UIUGens.mm)
+		add_library(UIUGens MODULE ${ui_sources})
 	else()
-		add_library(UIUGens MODULE UIUGens.cpp)
+		set(ui_sources UIUGens.cpp)
+		add_library(UIUGens MODULE ${ui_sources})
 		target_link_libraries(UIUGens PRIVATE ${PTHREADS_LIBRARY})
 	endif()
 
@@ -100,23 +101,31 @@ if(NOT NO_X11)
 	list(APPEND plugins UIUGens)
 endif()
 
-add_library(FFT_UGens MODULE
+set(FFT_sources
 	FFTInterfaceTable.cpp
 	FFT_UGens.cpp
 	PV_UGens.cpp
 	PartitionedConvolution.cpp
+)
+
+add_library(FFT_UGens MODULE
+	${FFT_sources}
 	${scplugin_common_sources}
 )
 
-add_library(PV_ThirdParty MODULE
+set(PV_ThirdParty_sources
 	Convolution.cpp
 	FFT2InterfaceTable.cpp
 	FeatureDetection.cpp
 	PV_ThirdParty.cpp
+)
+
+add_library(PV_ThirdParty MODULE
+	${PV_ThirdParty_sources}
 	${scplugin_common_sources}
 )
 
-add_library(ML_UGens MODULE
+set(ML_sources
 	ML.cpp
 	Loudness.cpp
 	BeatTrack.cpp
@@ -131,6 +140,10 @@ add_library(ML_UGens MODULE
 	ML.h
 	Onsets.h
 	onsetsds.h
+)
+
+add_library(ML_UGens MODULE
+	${ML_sources}
 	${scplugin_common_sources}
 )
 
@@ -157,15 +170,15 @@ if(NOT NO_LIBSNDFILE)
 
 	if(SNDFILE_FOUND)
 		if(SNDFILE_HAS_VORBIS)
-			target_compile_definitions(DiskIO_UGens PUBLIC SNDFILE_HAS_VORBIS)
+			target_compile_definitions(DiskIO_UGens PRIVATE SNDFILE_HAS_VORBIS)
 		endif()
 		if(SNDFILE_HAS_OPUS)
-			target_compile_definitions(DiskIO_UGens PUBLIC SNDFILE_HAS_OPUS)
+			target_compile_definitions(DiskIO_UGens PRIVATE SNDFILE_HAS_OPUS)
 		endif()
 		if(SNDFILE_HAS_MPEG)
-			target_compile_definitions(DiskIO_UGens PUBLIC SNDFILE_HAS_MPEG)
+			target_compile_definitions(DiskIO_UGens PRIVATE SNDFILE_HAS_MPEG)
 		endif()
-		target_include_directories(DiskIO_UGens PUBLIC ${SNDFILE_INCLUDE_DIR})
+		target_include_directories(DiskIO_UGens SYSTEM PRIVATE ${SNDFILE_INCLUDE_DIR})
 		target_link_libraries(DiskIO_UGens PRIVATE ${PTHREADS_LIBRARY} ${SNDFILE_LIBRARIES})
 		list(APPEND plugins DiskIO_UGens)
 	else()
@@ -236,7 +249,7 @@ if (SUPERNOVA)
 		add_library(DiskIO_UGens_supernova MODULE DiskIO_UGens.cpp)
 
 		if(SNDFILE_FOUND)
-			target_include_directories(DiskIO_UGens_supernova PUBLIC ${SNDFILE_INCLUDE_DIR})
+			target_include_directories(DiskIO_UGens_supernova SYSTEM PUBLIC ${SNDFILE_INCLUDE_DIR})
       target_link_libraries(DiskIO_UGens_supernova PRIVATE ${SNDFILE_LIBRARIES} ${PTHREADS_LIBRARY} ${MATH_LIBRARY} Boost::thread)
 			list(APPEND supernova_plugins DiskIO_UGens_supernova)
 		else()
@@ -363,3 +376,14 @@ set_property(TARGET ${plugins} ${supernova_plugins} PROPERTY FOLDER UnitGenerato
 
 set(plugins "${plugins}" PARENT_SCOPE)
 set(supernova_plugins "${supernova_plugins}" PARENT_SCOPE)
+
+if(STATIC_PLUGINS)
+	set(all_plugin_sources
+		${plugin_sources}
+		${FFT_sources}
+		${PV_ThirdParty_sources}
+		${ML_sources}
+		${diskio_sources}
+		${ui_sources}
+	PARENT_SCOPE)
+endif()

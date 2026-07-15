@@ -16,8 +16,6 @@ if(NOT NO_LIBSNDFILE)
 	list(APPEND simple_tests
 		sndfile_backend_test.cpp
 	)
-else()
-	add_definitions("-DNO_LIBSNDFILE")
 endif()
 
 if(!APPLE)
@@ -43,3 +41,13 @@ foreach(test ${simple_tests})
 
   set_property(TARGET ${test_name} PROPERTY FOLDER Test/Supernova)
 endforeach(test)
+
+if(NOT NO_LIBSNDFILE)
+  foreach(test_target sndfile_backend_test buffer_manager_test)
+    target_link_libraries(${test_target} PRIVATE ${SNDFILE_LIBRARIES})
+    target_include_directories(${test_target} SYSTEM PRIVATE ${SNDFILE_INCLUDE_DIR})
+  endforeach()
+else()
+  target_compile_definitions(buffer_manager_test PRIVATE NO_LIBSNDFILE)
+endif()
+

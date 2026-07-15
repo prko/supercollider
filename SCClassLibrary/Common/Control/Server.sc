@@ -1056,6 +1056,41 @@ Server {
 		this.newAllocators;
 	}
 
+	quitSync { |condition|
+		condition ?? { condition = Condition.new };
+		condition.test = false;
+		this.quit;
+		this.prWaitForPidRelease({
+			condition.test = true;
+			condition.signal
+		}, {
+			// we may end up here
+			// if the server happened to become unresponsive recently
+			// in that case we try to quit again
+			this.quit;
+			this.prWaitForPidRelease({
+				condition.test = true;
+				condition.signal
+			}, {
+				// as a last resort...
+				"Server '%' failed to quit".format(this.name).postln;
+				this.pid !? {
+					"Forcing process with pid % to stop via system command.".format(this.pid).postln;
+					thisProcess.platform.killProcessByID(this.pid)
+				};
+				this.prWaitForPidRelease({
+					condition.test = true;
+					condition.signal
+				}, {
+					"The process did not stop after a timeout, which may result in dangling network resources.".warn;
+					condition.test = true;
+					condition.signal
+				});
+			});
+		}, this.statusWatcher.timeoutBeforeConsideredDeadOnExit * 1.5); // timeout is longer than ServerStatusWatcher waiting to declare the server unresponsive
+		condition.wait;
+	}
+
 	*quitAll { |watchShutDown = true|
 		all.do { |server|
 			if(server.sendQuit === true) {

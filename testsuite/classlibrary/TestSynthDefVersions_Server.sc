@@ -76,10 +76,7 @@ TestSynthDefVersions_Server : UnitTest {
 		};
 
 		if (server.serverRunning) {
-			server.quit;
-			// avoid UDP address in use errors when restarting the Server.
-			// Unfortunately, there is no way to wait for the Server to quit...
-			1.wait;
+			server.quitSync;
 		};
 
 		server.remove;
@@ -121,10 +118,7 @@ TestSynthDefVersions_Server : UnitTest {
 		};
 
 		if (server.serverRunning) {
-			server.quit;
-			// avoid UDP address in use errors when restarting the Server.
-			// Unfortunately, there is no way to wait for the Server to quit...
-			1.wait;
+			server.quitSync;
 		};
 
 		server.remove;

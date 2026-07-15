@@ -49,10 +49,7 @@ TestUnitCommand : UnitTest {
 		this.assert(busValue == -3.0, "%: synchronous unit command (non-queued) works".format(serverName));
 
 		if (server.serverRunning) {
-			server.quit;
-			// avoid UDP address in use errors when restarting the Server.
-			// Unfortunately, there is no way to wait for the Server to quit...
-			1.wait;
+			server.quitSync;
 		};
 	}
 
@@ -160,10 +157,7 @@ TestUnitCommand : UnitTest {
 		this.assert(busValue == 0.0, "%: cancelled async unit command did not perform completion message".format(serverName));
 
 		if (server.serverRunning) {
-			server.quit;
-			// avoid UDP address in use errors when restarting the Server.
-			// Unfortunately, there is no way to wait for the Server to quit...
-			1.wait;
+			server.quitSync;
 		};
 	}
 

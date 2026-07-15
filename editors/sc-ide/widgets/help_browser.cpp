@@ -21,7 +21,6 @@
 #ifdef SC_USE_QTWEBENGINE
 
 #    define QT_NO_DEBUG_OUTPUT
-
 #    include "help_browser.hpp"
 #    include "main_window.hpp"
 #    include "../core/sc_process.hpp"
@@ -32,6 +31,7 @@
 #    include <SC_Filesystem.hpp>
 #    include "standard_dirs.hpp"
 
+#    include <qvariant.h>
 #    include <QVBoxLayout>
 #    include <QToolBar>
 #    include <QAction>
@@ -422,8 +422,6 @@ void HelpBrowser::onScResponse(const QString& command, const QString& data) {
     mWebView->load(urlString);
 
     HelpBrowserDocklet* helpDock = MainWindow::instance()->helpBrowserDocklet();
-    if (helpDock)
-        helpDock->focus();
 
     emit urlChanged();
 }
@@ -432,17 +430,19 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
     static const QString jsSelectLine("selectLine()");
     static const QString jsSelectRegion("selectRegion()");
 
-    QString selected = mWebView->selectedText();
-    if (!selected.isEmpty()) {
-        Main::scProcess()->evaluateCode(selected);
-    } else {
-        mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [this](QVariant res) {
-            QString selectionResult = res.toString();
-            if (!selectionResult.isEmpty()) {
-                Main::scProcess()->evaluateCode(selectionResult);
-            }
-        });
-    }
+    mWebView->page()->runJavaScript("window.getSelection().toString()", [this, evaluateRegion](const QVariant& res) {
+        QString selection = res.toString();
+        if (!selection.isEmpty()) {
+            Main::scProcess()->evaluateCode(selection);
+        } else {
+            mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [](QVariant res) {
+                QString selectionResult = res.toString();
+                if (!selectionResult.isEmpty()) {
+                    Main::scProcess()->evaluateCode(selectionResult);
+                }
+            });
+        }
+    });
 }
 
 void HelpBrowser::onJsConsoleMsg(const QString& arg1, int arg2, const QString& arg3) {

@@ -25,6 +25,14 @@ ScIDE {
 			{ Document.open("/" ++ parts[0], parts[1] ?? { 0 }, parts[2] ?? [0]) }.fork(AppClock)
 		});
 
+		PostWindowURLHandler.register(\http, {|url|
+			HelpBrowser.goTo(url)
+		});
+
+		PostWindowURLHandler.register(\https, {|url|
+			HelpBrowser.goTo(url)
+		});
+
 		StartUp.add {
 			if (this.connected) {
 				this.handshake
@@ -448,7 +456,7 @@ PostWindowURLHandler {
 	}
 
 	*register { |name, fn| registered[name] = fn }
-	
+
 	*new { |scheme, url|
 		var found = registered[scheme.asSymbol];
 		^if(found.isNil){

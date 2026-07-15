@@ -1,12 +1,13 @@
 #define BOOST_TEST_MODULE sc_lexer_tests
+#include "tokens.hpp"
 #include <boost/test/included/unit_test.hpp>
 #include <cstddef>
 #include <source_utils.hpp>
 #include <lexer.hpp>
+#include <normalise_source.hpp>
 
 using namespace sc::lex;
 // MSVC needs this.
-using TT = sc::lex::TokenType;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(sc::lex::TokenType);
 
@@ -134,18 +135,18 @@ BOOST_AUTO_TEST_CASE(line_iter_backwards) {
 
 
 static constexpr std::array default_gobble {
-    TT::Space, TT::NewLine, TT::Tab, TT::Comment, TT::MultilineComment,
+    sc::lex::TokenType::Space,   sc::lex::TokenType::NewLine,          sc::lex::TokenType::Tab,
+    sc::lex::TokenType::Comment, sc::lex::TokenType::MultilineComment,
 };
 
 template <size_t N, size_t M>
-void match(const char* text, const std::array<TT, N>& to_find, const std::array<TT, M>& to_gobble) {
-    const auto text_len = strlen(text);
-
-    CodePointStream stream { text, text_len, {} };
+void match(const char* text, const std::array<sc::lex::TokenType, N>& to_find,
+           const std::array<sc::lex::TokenType, M>& to_gobble) {
+    CodePointStream stream { NormalisedSource(text, strlen(text)), {} };
 
     sc::lex::actions::TypeAndLocationAction action {};
 
-    for (const TT t : to_find) {
+    for (const sc::lex::TokenType t : to_find) {
         auto o = lexer(stream, action);
 
         while (std::find(to_gobble.begin(), to_gobble.end(), o.type) != to_gobble.end()) {
@@ -156,11 +157,12 @@ void match(const char* text, const std::array<TT, N>& to_find, const std::array<
     }
 
     auto o = lexer(stream, action);
-    while (std::find(to_gobble.begin(), to_gobble.end(), o.type) != to_gobble.end() && o.type != TT::EndOfFile) {
+    while (std::find(to_gobble.begin(), to_gobble.end(), o.type) != to_gobble.end()
+           && o.type != sc::lex::TokenType::EndOfFile) {
         o = lexer(stream, action);
     }
 
-    BOOST_TEST(o.type == TT::EndOfFile);
+    BOOST_TEST(o.type == sc::lex::TokenType::EndOfFile);
 }
 
 BOOST_AUTO_TEST_CASE(basic) {
@@ -172,47 +174,47 @@ BOOST_AUTO_TEST_CASE(basic) {
     // NO gobble
     match(text,
           std::array {
-              TT::Space,
-              TT::Name,
-              TT::Space,
-              TT::Float,
-              TT::Space,
-              TT::SymbolSlash,
-              TT::Space,
-              TT::NewLine,
-              TT::Space,
-              TT::SymbolQuote,
-              TT::SemiColon,
-              TT::Space,
-              TT::NewLine,
-              TT::Minus,
-              TT::Float,
-              TT::Space,
-              TT::Tab,
-              TT::Space,
-              TT::PrimitiveName,
-              TT::Space,
-              TT::ClassName,
-              TT::Space,
-              TT::KeywordBinaryOperator,
-              TT::SymbolSlash,
-              TT::OpenParen,
-              TT::Space,
-              TT::EndOfFile,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::Float,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::SymbolSlash,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::NewLine,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::SymbolQuote,
+              sc::lex::TokenType::SemiColon,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::NewLine,
+              sc::lex::TokenType::Minus,
+              sc::lex::TokenType::Float,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::Tab,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::PrimitiveName,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::ClassName,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::KeywordBinaryOperator,
+              sc::lex::TokenType::SymbolSlash,
+              sc::lex::TokenType::OpenParen,
+              sc::lex::TokenType::Space,
+              sc::lex::TokenType::EndOfFile,
           },
-          std::array<TT, 0> {});
+          std::array<sc::lex::TokenType, 0> {});
 
-    match("    *new ", std::array { TT::Multiply, TT::Name }, default_gobble);
+    match("    *new ", std::array { sc::lex::TokenType::Multiply, sc::lex::TokenType::Name }, default_gobble);
 
     match("    const nl = \"\\n\"; \n\t*new ",
           std::array {
-              TT::Const,
-              TT::Name,
-              TT::EqualsSign,
-              TT::StringLine,
-              TT::SemiColon,
-              TT::Multiply,
-              TT::Name,
+              sc::lex::TokenType::Const,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::EqualsSign,
+              sc::lex::TokenType::StringLine,
+              sc::lex::TokenType::SemiColon,
+              sc::lex::TokenType::Multiply,
+              sc::lex::TokenType::Name,
           },
           default_gobble);
 }
@@ -222,48 +224,50 @@ BOOST_AUTO_TEST_CASE(fn) {
 
     match(text,
           std::array {
-              TT::Var,
-              TT::Name,
-              TT::EqualsSign,
-              TT::OpenCurly,
-              TT::Pipe,
-              TT::Name,
-              TT::Comma,
-              TT::Name,
-              TT::Comma,
-              TT::Name,
-              TT::Pipe,
-              TT::Name,
-              TT::Add,
-              TT::Name,
-              TT::Add,
-              TT::Name,
-              TT::CloseCurly,
-              TT::SemiColon,
+              sc::lex::TokenType::Var,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::EqualsSign,
+              sc::lex::TokenType::OpenCurly,
+              sc::lex::TokenType::Pipe,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Comma,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Comma,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Pipe,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Add,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::Add,
+              sc::lex::TokenType::Name,
+              sc::lex::TokenType::CloseCurly,
+              sc::lex::TokenType::SemiColon,
           },
           default_gobble);
 }
 
 BOOST_AUTO_TEST_CASE(strings) {
-    match(R"%(   "(\""   )%", std::array { TT::StringLine }, default_gobble);
-    match(R"%( "(\"" )%", std::array { TT::StringLine }, default_gobble);
-    match(R"%( "\")" abs )%", std::array { TT::StringLine, TT::Name }, default_gobble);
-    match(R"%( "◎" bang )%", std::array { TT::StringLine, TT::Name }, default_gobble);
+    match(R"%(   "(\""   )%", std::array { sc::lex::TokenType::StringLine }, default_gobble);
+    match(R"%( "(\"" )%", std::array { sc::lex::TokenType::StringLine }, default_gobble);
+    match(R"%( "\")" abs )%", std::array { sc::lex::TokenType::StringLine, sc::lex::TokenType::Name }, default_gobble);
+    match(R"%( "◎" bang )%", std::array { sc::lex::TokenType::StringLine, sc::lex::TokenType::Name }, default_gobble);
     match(R"%( 
-			"The function % should behave the same for a PatternProxy and its source:\n%\n"
+			"The function % should behave the same for a Pasc::lex::TokenTypeernProxy and its source:\n%\n"
     )%",
-          std::array { TT::StringLine }, default_gobble);
+          std::array { sc::lex::TokenType::StringLine }, default_gobble);
 }
 
-BOOST_AUTO_TEST_CASE(symbol) { match("\\)", std::array { TT::SymbolSlash, TT::CloseParen }, default_gobble); }
+BOOST_AUTO_TEST_CASE(symbol) {
+    match("\\)", std::array { sc::lex::TokenType::SymbolSlash, sc::lex::TokenType::CloseParen }, default_gobble);
+}
 
 BOOST_AUTO_TEST_CASE(ascii) {
-    match("$a", std::array { TT::Ascii }, default_gobble);
-    match("$a)", std::array { TT::Ascii, TT::CloseParen }, default_gobble);
-    match("$\\n", std::array { TT::Ascii }, default_gobble);
-    match("$\\n)", std::array { TT::Ascii, TT::CloseParen }, default_gobble);
-    match("$ ", std::array { TT::Ascii }, default_gobble);
-    match("$    bang  ", std::array { TT::Ascii, TT::Name }, default_gobble);
+    match("$a", std::array { sc::lex::TokenType::Ascii }, default_gobble);
+    match("$a)", std::array { sc::lex::TokenType::Ascii, sc::lex::TokenType::CloseParen }, default_gobble);
+    match("$\\n", std::array { sc::lex::TokenType::Ascii }, default_gobble);
+    match("$\\n)", std::array { sc::lex::TokenType::Ascii, sc::lex::TokenType::CloseParen }, default_gobble);
+    match("$ ", std::array { sc::lex::TokenType::Ascii }, default_gobble);
+    match("$    bang  ", std::array { sc::lex::TokenType::Ascii, sc::lex::TokenType::Name }, default_gobble);
 }
 
 BOOST_AUTO_TEST_CASE(larger_obj) {
@@ -275,19 +279,19 @@ Object {
 
 	*new { arg maxSize = 0; _BasicNew
     )%%";
-    using T = TT;
+    using T = sc::lex::TokenType;
     // clang-format off
     match(txt,
           std::array {
-              T::ClassName,  TT::OpenCurly, 
+              T::ClassName,  sc::lex::TokenType::OpenCurly, 
               T::ClassVar,
-              TT::LessThan, T::Name, TT::Comma,
-              T::Name, TT::Comma,
-              T::Name,TT::Comma, 
-              TT::LessThan, T::Name,TT::SemiColon, 
-              T::Const, T::Name, TT::EqualsSign, T::StringLine, TT::SemiColon,
-              TT::Multiply, T::Name, TT::OpenCurly,
-              T::Arg, T::Name, TT::EqualsSign, T::Integer, TT::SemiColon,
+              sc::lex::TokenType::LessThan, T::Name, sc::lex::TokenType::Comma,
+              T::Name, sc::lex::TokenType::Comma,
+              T::Name,sc::lex::TokenType::Comma, 
+              sc::lex::TokenType::LessThan, T::Name,sc::lex::TokenType::SemiColon, 
+              T::Const, T::Name, sc::lex::TokenType::EqualsSign, T::StringLine, sc::lex::TokenType::SemiColon,
+              sc::lex::TokenType::Multiply, T::Name, sc::lex::TokenType::OpenCurly,
+              T::Arg, T::Name, sc::lex::TokenType::EqualsSign, T::Integer, sc::lex::TokenType::SemiColon,
               T::PrimitiveName
           },
           default_gobble);
@@ -302,25 +306,104 @@ Recorder {
 	var >recHeaderFormat, >recSampleFormat, >recBufSize;
 	var recordBuf, recordNode, synthDef;
     )%%";
-    using T = TT;
+    using T = sc::lex::TokenType;
     // clang-format off
     match(txt,
           std::array {
-              T::ClassName,  TT::OpenCurly, 
+              T::ClassName,  sc::lex::TokenType::OpenCurly, 
               T::Var,
-              TT::LessThan, T::Name, TT::Comma,
-              T::ReadWriteVar, T::Name, TT::SemiColon,
+              sc::lex::TokenType::LessThan, T::Name, sc::lex::TokenType::Comma,
+              T::ReadWriteVar, T::Name, sc::lex::TokenType::SemiColon,
 
               T::Var,
-              TT::GreaterThan, T::Name, TT::Comma,
-              TT::GreaterThan, T::Name, TT::Comma,
-              TT::GreaterThan, T::Name, TT::SemiColon,
+              sc::lex::TokenType::GreaterThan, T::Name, sc::lex::TokenType::Comma,
+              sc::lex::TokenType::GreaterThan, T::Name, sc::lex::TokenType::Comma,
+              sc::lex::TokenType::GreaterThan, T::Name, sc::lex::TokenType::SemiColon,
 
               T::Var,
-              T::Name, TT::Comma,
-              T::Name, TT::Comma,
-              T::Name, TT::SemiColon,
+              T::Name, sc::lex::TokenType::Comma,
+              T::Name, sc::lex::TokenType::Comma,
+              T::Name, sc::lex::TokenType::SemiColon,
           },
           default_gobble);
     // clang-format on
+}
+
+
+using TSource = std::pair<sc::lex::TokenType, const char*>;
+template <size_t I> void match_str(const char* text, const std::array<TSource, I>& expected) {
+    CodePointStream stream { sc::lex::NormalisedSource(text, strlen(text)), {} };
+    sc::lex::actions::TypeAndLocationAction action {};
+
+    const auto test = [&](auto o, sc::lex::TokenType t, const char* txt) {
+        BOOST_TEST(o.type == t);
+        const auto [ptr, sz] = stream.source_code_range_to_text(o.range);
+        const auto txt_sz = strlen(txt);
+        BOOST_TEST(sz == txt_sz);
+        for (size_t i { 0 }; i < sz; ++i)
+            BOOST_TEST(ptr[i] == txt[i]);
+    };
+
+    for (const auto& e : expected) {
+        test(sc::lex::lexer(stream, action), e.first, e.second);
+    }
+    test(sc::lex::lexer(stream, action), sc::lex::TokenType::EndOfFile, "");
+}
+
+BOOST_AUTO_TEST_CASE(newline_normalisation) {
+    match_str("meow\r\nwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\nwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\r\n\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\n\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\r\n\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("meow\r\r\n\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n\n\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+
+
+    // Turn all this stuff that unicode considers a newline, into the \n character.
+    match_str("meow\f\v\n\rwoof",
+              std::array {
+                  TSource { sc::lex::TokenType::Name, "meow" },
+                  TSource { sc::lex::TokenType::NewLine, "\n\n\n\n" },
+                  TSource { sc::lex::TokenType::Name, "woof" },
+              });
+    match_str("\"meow\f\v\n\rwoof\"",
+              std::array {
+                  TSource { sc::lex::TokenType::StringLine, "\"meow\n\n\n\nwoof\"" },
+              });
 }

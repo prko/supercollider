@@ -33,6 +33,8 @@ inline constexpr CodePoint invalid_utf8_flag { std::numeric_limits<CodePoint>::m
 
 
 // Note: these are supercollider's defintions, not unicode's.
+// The only valid newline ascii character is \n. \r\n and \r are not allowed!!
+// Supercollider requires that the source code be normalised before tokenising, see normalise_source.hpp
 [[nodiscard]] bool is_newline(CodePoint c) noexcept;
 [[nodiscard]] bool is_space(CodePoint c) noexcept;
 [[nodiscard]] bool is_tab(CodePoint c) noexcept;

@@ -632,6 +632,7 @@ extern PyrSlot o_fhalf, o_fnegone, o_fzero, o_fone, o_ftwo;
 extern PyrSlot o_negone, o_zero, o_one, o_two;
 extern PyrSlot o_emptyarray, o_onenilarray, o_argnamethis;
 
+extern PyrSymbol* s_abstract_object; // "AbstractObjectExperimental"
 extern PyrSymbol* s_object; // "Object"
 extern PyrSymbol* s_this; // "this"
 extern PyrSymbol* s_super; // "super"

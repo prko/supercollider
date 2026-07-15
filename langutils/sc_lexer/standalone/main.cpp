@@ -1,4 +1,5 @@
 #include "codepoint_stream.hpp"
+#include "normalise_source.hpp"
 #include "text_location.hpp"
 #include <cstdlib>
 #include <cstring>
@@ -54,8 +55,9 @@ int main(int argc, char* argv[]) {
 #endif // _MSC_VER
 
     const auto source_len = strlen(source);
+    sc::lex::NormalisedSource src { source, source_len };
 
-    CodePointStream stream { source, source_len, {} };
+    CodePointStream stream { std::move(src), {} };
     actions::TypeAndLocationAction action {};
 
     std::stringstream ss {};

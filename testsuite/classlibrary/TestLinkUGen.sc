@@ -12,8 +12,7 @@ TestLinkUGens : UnitTest {
 
 	tearDown {
 		LinkPhase.stop(server);
-		server.sync;
-		server.quit;
+		server.quitSync;
 		server.remove;
 	}
 

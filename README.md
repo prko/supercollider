@@ -19,7 +19,7 @@ Install
 
 macOS and Windows builds for stable releases are provided at our [downloads page][downloads page]. See the [macOS README](README_MACOS.md) and [Windows README](README_WINDOWS.md) for instructions on usage, and how to build SC yourself.
 
-To get the latest stable version, Linux users will need to build SuperCollider themselves. See the [Linux README](README_LINUX.md) for instructions.
+To get the latest stable version, Linux users will need to build SuperCollider themselves or use the Flatpak build. See the [Linux README](README_LINUX.md) for instructions.
 
 See the [Raspberry Pi](README_RASPBERRY_PI.md) and [Bela](README_BELA.md) READMEs for instructions on building on those platforms.
 
@@ -34,7 +34,7 @@ SuperCollider is tested with:
 
 SuperCollider is known to support these platforms:
 - Windows 10, 11
-- macOS 11-15
+- macOS 12-15, 26
 - Ubuntu 22.04-24.04
 
 

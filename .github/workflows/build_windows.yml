@@ -35,8 +35,8 @@ jobs:
             fftw-arch: "x64"
             cmake-arch: "x64"
             os-version: "2022"
-            qt-version: "6.7.3"
-            qt-arch: "win64_msvc2019_64"
+            qt-version: "6.8.3"
+            qt-arch: "win64_msvc2022_64"
             fftw-url: "ftp://ftp.fftw.org/pub/fftw/fftw-3.3.5-dll64.zip"
             cmake-generator: "Visual Studio 17 2022"
             vcvars-script-path: "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
@@ -72,7 +72,7 @@ jobs:
       ARTIFACT_FILE: "SuperCollider-${{ inputs.sc-version }}-${{ matrix.artifact-suffix }}"
       INSTALLER_FILE: "SuperCollider-${{ inputs.sc-version }}-${{ matrix.installer-suffix }}"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -83,14 +83,14 @@ jobs:
 
       - name: cache vcpkg
         if: matrix.vcpkg-triplet
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/AppData/Local/vcpkg/archives
           key: ${{ runner.os }}-${{ matrix.os-version }}-${{ matrix.cmake-arch }}-${{ matrix.vcpkg-triplet }}-${{ steps.current-date.outputs.stamp }}
           restore-keys: ${{ runner.os }}-${{ matrix.os-version }}-${{ matrix.cmake-arch }}-${{ matrix.vcpkg-triplet }}-
 
       - name: cache ccache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/AppData/Local/ccache # updated in ccache 4.7, see https://github.com/ccache/ccache/issues/1023
           key: ${{ runner.os }}-${{ matrix.os-version }}-${{ matrix.cmake-arch }}-${{ matrix.qt-arch }}-${{ steps.current-date.outputs.stamp }}

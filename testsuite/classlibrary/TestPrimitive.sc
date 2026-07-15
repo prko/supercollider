@@ -16,6 +16,11 @@ TestPrimitive_Obj {
 		1 + 1;
 		^this.primitiveFailed
 	}
+
+	//  This should still compile and not crash even though _Meow does not exist
+	undefinedPrimitive {
+		_Meow
+	}
 }
 
 TestPrimitive_Obj_NoError {
@@ -108,5 +113,10 @@ TestPrimitives : UnitTest {
 	test_kw_with_var_args {
 		this.with_kw_and_var_args(TestPrimitive_Obj());
 		this.with_kw_and_var_args(TestPrimitive_Obj_NoError());
+	}
+	test_undefined {
+		var a = TestPrimitive_Obj();
+		// should not crash, will post error.
+		a.undefinedPrimitive;
 	}
 }

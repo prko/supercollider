@@ -73,6 +73,7 @@ int gFormatElemTag[NUMOBJFORMATS];
 PyrMethod* gNullMethod; // used to fill row table
 PyrClass* gTagClassTable[16];
 
+PyrClass* class_abstract_object;
 PyrClass* class_object;
 PyrClass* class_dict;
 PyrClass* class_array;
@@ -105,6 +106,7 @@ PyrClass* class_finalizer;
 PyrClass* class_server_shm_interface;
 
 PyrSymbol* s_none;
+PyrSymbol* s_abstract_object;
 PyrSymbol* s_object;
 PyrSymbol* s_bag;
 PyrSymbol* s_set;
@@ -162,6 +164,7 @@ PyrSymbol* s_performArgs;
 PyrSymbol *s_series, *s_copyseries, *s_putseries;
 PyrSymbol *s_envirGet, *s_envirPut;
 PyrSymbol *s_synth, *s_environment, *s_event;
+PyrSymbol* s_proto_object;
 PyrSymbol* s_shutdown;
 PyrSymbol *s_super, *s_this;
 
@@ -189,6 +192,7 @@ void initSymbols() {
 
     // classes
     s_object = getsym("Object");
+    s_abstract_object = getsym("AbstractObjectExperimental");
     s_ref = getsym("Ref");
     s_dictionary = getsym("Dictionary");
     s_bag = getsym("Bag");
@@ -247,6 +251,7 @@ void initSymbols() {
     s_synth = getsym("Synth");
     s_environment = getsym("Environment");
     s_event = getsym("Event");
+    s_proto_object = getsym("ProtoObject");
 
     // interpreter
     s_interpretCmdLine = getsym("interpretCmdLine");
@@ -1188,11 +1193,12 @@ void buildBigMethodMatrix() {
 #endif
     filledClassIndices.wait();
 #ifdef _MSC_VER
-    size_t numentries = fillClassRows(class_object, bigTable);
+    size_t numentries = fillClassRows(class_abstract_object, bigTable);
 #else
-    size_t numentries = fillClassRows(class_object, bigTable, pool);
+    size_t numentries = fillClassRows(class_abstract_object, bigTable, pool);
 #endif
-    post("\tnumentries = %lu / %d = %.2g\n", numentries, bigTableSize, (double)numentries / (double)bigTableSize);
+    post("\tnum entries = %lu, big table size = %d, num entries / big table size = %.2g\n", numentries, bigTableSize,
+         (double)numentries / (double)bigTableSize);
 
 
     ColumnDescriptor* filledSelectors = filledSelectorsFuture.get();
@@ -1488,7 +1494,7 @@ PyrClass* makeIntrinsicClass(PyrSymbol* className, PyrSymbol* superClassName, in
         metaSuperClass = metaSuperClassName->u.classobj;
         superInstVars = numSuperInstVars(superClass);
     } else {
-        // else it must be Object and so has no superclass
+        // else it must be AbstractObjectExperimental and so has no superclass
         metaSuperClassName = nullptr;
         superInstVars = 0;
     }
@@ -1544,28 +1550,32 @@ void addIntrinsicClassVar(PyrClass* classobj, const char* varName, PyrSlot* slot
 }
 
 void initClasses() {
-    PyrClass* class_object_meta;
-    PyrMethodRaw* methraw;
-
     // BOOTSTRAP THE OBJECT HIERARCHY
-
     gNumClassVars = 0;
     gClassList = nullptr;
     gNullMethod = newPyrMethod();
     SetSymbol(&gNullMethod->name, (PyrSymbol*)nullptr);
-    methraw = METHRAW(gNullMethod);
+    PyrMethodRaw* methraw = METHRAW(gNullMethod);
     methraw->methType = methNormal;
 
     // build intrinsic classes
     class_class = nullptr;
-    class_object = makeIntrinsicClass(s_object, nullptr, 0, 4);
+    class_abstract_object = makeIntrinsicClass(s_abstract_object, nullptr, 0, 0);
+    class_object = makeIntrinsicClass(s_object, s_abstract_object, 0, 4);
     class_class = makeIntrinsicClass(s_class, s_object, classClassNumInstVars, 1);
 
     // now fix class_class ptrs that were just previously installed erroneously
-    class_object->classptr->classptr = class_class;
-    class_class->classptr->classptr = class_class;
-    class_object_meta = class_object->classptr;
-    class_object_meta->superclass = class_class->name;
+    PyrClass* class_object_meta = class_object->classptr;
+    PyrClass* class_abstract_object_meta = class_abstract_object->classptr;
+
+    class_object_meta->classptr = class_class;
+    class_abstract_object_meta->classptr = class_class;
+
+    PyrClass* class_class_meta = class_class->classptr;
+    class_class_meta->classptr = class_class;
+
+    class_abstract_object_meta->superclass = class_class->name;
+    class_object_meta->superclass = class_abstract_object_meta->name;
 
     addIntrinsicClassVar(class_object, "dependantsDictionary", &o_nil);
     addIntrinsicClassVar(class_object, "currentEnvironment", &o_nil);
@@ -1606,9 +1616,14 @@ void initClasses() {
     memcpy(slotRawSymbolArray(&class_object_meta->instVarNames)->symbols,
            slotRawSymbolArray(&class_class->instVarNames)->symbols, sizeof(PyrSymbol*) * classClassNumInstVars);
 
-    memcpy(slotRawObject(&class_class->classptr->iprototype)->slots, slotRawObject(&class_class->iprototype)->slots,
+    memcpy(slotRawObject(&class_abstract_object_meta->iprototype)->slots,
+           slotRawObject(&class_class->iprototype)->slots, sizeof(PyrSlot) * classClassNumInstVars);
+    memcpy(slotRawSymbolArray(&class_abstract_object_meta->instVarNames)->symbols,
+           slotRawSymbolArray(&class_class->instVarNames)->symbols, sizeof(PyrSymbol*) * classClassNumInstVars);
+
+    memcpy(slotRawObject(&class_class_meta->iprototype)->slots, slotRawObject(&class_class->iprototype)->slots,
            sizeof(PyrSlot) * classClassNumInstVars);
-    memcpy(slotRawSymbolArray(&class_class->classptr->instVarNames)->symbols,
+    memcpy(slotRawSymbolArray(&class_class_meta->instVarNames)->symbols,
            slotRawSymbolArray(&class_class->instVarNames)->symbols, sizeof(PyrSymbol*) * classClassNumInstVars);
 
 
@@ -1623,8 +1638,9 @@ void initClasses() {
 
     // now fix array classptrs in already created classes
     fixClassArrays(class_class);
-    fixClassArrays(class_class->classptr);
+    fixClassArrays(class_class_meta);
     fixClassArrays(class_object_meta);
+    fixClassArrays(class_abstract_object_meta);
     fixClassArrays(class_collection);
     fixClassArrays(class_sequenceable_collection);
     fixClassArrays(class_arrayed_collection);

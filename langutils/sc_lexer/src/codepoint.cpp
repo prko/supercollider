@@ -83,15 +83,12 @@ namespace sc::lex {
         || ((0x2000 <= c) && (c <= 0x200A)) // en/em space/quads and other spaces
         || c == 0x202F // narrow no break
         || c == 0x205F // medium mathematical space
-        || c == 0x3000 // ideogrpahic space
+        || c == 0x3000 // ideograpahic space
         ;
 }
 
 [[nodiscard]] bool is_newline(CodePoint c) noexcept {
     return c == '\n' // line feed
-        || c == '\v' // vertical tab (not classified as a tab)
-        || c == '\f' // form feed
-        || c == '\r' // carrage return
         || c == 0x0085 // next line
         || c == 0x2028 // line separator
         || c == 0x2029 // paragraph separator

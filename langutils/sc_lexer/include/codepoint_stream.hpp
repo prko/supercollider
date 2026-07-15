@@ -6,6 +6,7 @@
 
 #include <text_location.hpp>
 #include <codepoint.hpp>
+#include <normalise_source.hpp>
 
 namespace sc::lex {
 
@@ -46,8 +47,9 @@ class CodePointStream {
     } state {};
 
 public:
-    CodePointStream(const char* src, std::size_t src_len, FileCodeLocation src_start_in_file);
-    CodePointStream() = delete;
+    CodePointStream(NormalisedSource src, FileCodeLocation src_start_in_file) noexcept:
+        source_start_in_file(src_start_in_file),
+        source(std::move(src)) {}
     CodePointStream(CodePointStream&&) noexcept = default;
     CodePointStream(const CodePointStream&) = default;
     CodePointStream& operator=(CodePointStream&&) noexcept = delete;
@@ -56,8 +58,7 @@ public:
     // Allows us to get the location in the file that the source came from.
     const FileCodeLocation source_start_in_file;
     // Text, could be code snippet, or whole file, may not be null terminated.
-    const char* const source;
-    const std::size_t source_length;
+    const std::string source;
 
     // SourceCodeRange manipulation
     [[nodiscard]] FileCodeRange source_to_file(const SourceCodeRange& source) const;
@@ -81,14 +82,14 @@ public:
         // Copy state, don't update the main stream's state.
         State rolling_state { state };
         const auto get_next = [&]() {
-            const auto [cp, cp_size] = utf8_sequence_to_codepoint(source + rolling_state.next_byte_offest,
-                                                                  source_length - rolling_state.next_byte_offest);
+            const auto [cp, cp_size] = utf8_sequence_to_codepoint(source.c_str() + rolling_state.next_byte_offest,
+                                                                  source.size() - rolling_state.next_byte_offest);
             rolling_state.update(cp, cp_size);
             return cp;
         };
 
         for (std::size_t char_count { 0 }; char_count < N; ++char_count)
-            out[char_count] = (rolling_state.next_byte_offest >= source_length) ? 0 : get_next();
+            out[char_count] = (rolling_state.next_byte_offest >= source.size()) ? 0 : get_next();
 
         return { out };
     }
@@ -140,7 +141,7 @@ public:
     // Null terminator is NEVER accepted as a predicate.
     template <typename Predicate> std::size_t advance_while_count(Predicate&& predicate) {
         auto discard_null_then_predicate = [&](auto c) {
-            return (c == 0 || state.next_byte_offest >= source_length) ? false : predicate(c);
+            return (c == 0 || state.next_byte_offest >= source.size()) ? false : predicate(c);
         };
         std::size_t i { 0 };
         for (auto c = peek(); discard_null_then_predicate(c); c = advance_and_peek(), ++i) {}

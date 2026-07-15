@@ -2,12 +2,6 @@
 
 namespace sc::lex {
 
-CodePointStream::CodePointStream(const char* src, std::size_t src_len, FileCodeLocation src_start_in_file):
-    source_start_in_file(src_start_in_file),
-    source(src),
-    source_length(src_len) {}
-
-
 [[nodiscard]] FileCodeRange CodePointStream::source_to_file(const SourceCodeRange& src) const {
     return FileCodeRange { source_to_file(src.begin), source_to_file(src.end) };
 }
@@ -39,11 +33,11 @@ void CodePointStream::State::update(CodePoint next, std::uint8_t sz) noexcept {
 }
 
 CodePoint CodePointStream::advance() {
-    if (state.next_byte_offest >= source_length)
+    if (state.next_byte_offest >= source.size())
         return 0;
 
     const auto [c, sz] =
-        utf8_sequence_to_codepoint(source + state.next_byte_offest, source_length - state.next_byte_offest);
+        utf8_sequence_to_codepoint(source.c_str() + state.next_byte_offest, source.size() - state.next_byte_offest);
 
     state.update(c, sz);
 
@@ -57,7 +51,7 @@ CodePoint CodePointStream::advance() {
 
 [[nodiscard]] std::tuple<const char*, std::size_t>
 CodePointStream::source_code_range_to_text(const SourceCodeRange& range) const {
-    return { source + range.begin.absolute, range.end.absolute - range.begin.absolute };
+    return { source.c_str() + range.begin.absolute, range.end.absolute - range.begin.absolute };
 }
 
 void CodePointStream::reset() { state = {}; }

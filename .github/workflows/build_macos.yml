@@ -16,9 +16,9 @@ jobs:
           - job-name: "universal arm64 x64 with ctest"
             os-version: "15"
             xcode-version: "16.0"
-            qt-version: "6.7.3" # will use qt from aqtinstall
+            qt-version: "6.8.3" # will use qt from aqtinstall
             qt-modules: 'qtwebengine qtwebchannel qtwebsockets qtpositioning'
-            deployment-target: "11"
+            deployment-target: "12"
             cmake-architectures: "x86_64;arm64"
             homebrew-packages: ""
             homebrew-uninstall: "readline"
@@ -87,7 +87,7 @@ jobs:
       BREW_UNIVERSAL_WORKDIR: ${{ github.workspace }}/brew-universal
       SKIP_SIGNING: 1 # for brew-install-universal
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -98,7 +98,7 @@ jobs:
           echo "week=$(date '+%U')" >> $GITHUB_OUTPUT
 
       - name: cache ccache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/Library/Caches/ccache
           key: ${{ runner.os }}-${{ matrix.os-version }}-${{ matrix.xcode-version }}-${{ matrix.deployment-target }}-${{ matrix.cmake-architectures }}${{ matrix.extra-cmake-flags }}-${{ steps.current-date.outputs.stamp }}
@@ -108,7 +108,7 @@ jobs:
         run: rm -rf $(brew --cache)/downloads
 
       - name: cache homebrew downloads
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cache-homebrew
         with:
           path: ~/Library/Caches/Homebrew/downloads
@@ -117,7 +117,7 @@ jobs:
 
       - name: cache vcpkg
         if: matrix.vcpkg-triplet
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/vcpkg/archives
           key: ${{ runner.os }}-${{ matrix.os-version }}-${{ matrix.xcode-version }}-${{ matrix.deployment-target }}-${{ matrix.vcpkg-triplet }}-${{ steps.current-date.outputs.stamp }}

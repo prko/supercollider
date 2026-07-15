@@ -26,7 +26,6 @@
 #include "../../core/main.hpp"
 
 #include <QMenu>
-#include <QDebug>
 #include <QListWidgetItem>
 #include <QFontDatabase>
 #include <QApplication>
@@ -39,7 +38,7 @@ EditorPage::EditorPage(QWidget* parent):
     QWidget(parent),
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     fontDatabase(new QFontDatabase),
-#endif()
+#endif
     ui(new Ui::EditorConfigPage) {
     ui->setupUi(this);
 
@@ -52,7 +51,11 @@ EditorPage::EditorPage(QWidget* parent):
 #else
     connect(ui->fontSize, &QSpinBox::valueChanged, this, &EditorPage::updateFontPreview);
 #endif
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->fontAntialias, &QCheckBox::stateChanged, this, &EditorPage::updateFontPreview);
+#else
+    connect(ui->fontAntialias, &QCheckBox::checkStateChanged, this, &EditorPage::updateFontPreview);
+#endif
 
     connect(ui->themeCombo, &QComboBox::currentTextChanged, this, &EditorPage::updateTheme);
     connect(ui->themeCopyBtn, &QPushButton::clicked, this, &EditorPage::dialogCopyTheme);
