@@ -194,6 +194,7 @@ void HelpBrowser::createActions() {
     // Ensure F5 (QKeySequence::Refresh), Ctrl+R (Windows/Linux), and Cmd+R (macOS) all trigger Reload
     QList<QKeySequence> reloadShortcuts;
     reloadShortcuts.append(QKeySequence::Refresh);
+    reloadShortcuts.append(QKeySequence(Qt::Key_F5));
     reloadShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_R));
     mActions[Reload]->setShortcuts(reloadShortcuts);
 }
@@ -204,21 +205,25 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
     // Ensure consistent Zoom In across all platforms.
-    // Use Qt enums instead of strings to avoid parsing failures on different keyboard layouts.
     QList<QKeySequence> zoomInShortcuts;
     zoomInShortcuts.append(QKeySequence::ZoomIn);
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Plus));
     mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
 
     // Ensure consistent Zoom Out across all platforms
     QList<QKeySequence> zoomOutShortcuts;
     zoomOutShortcuts.append(QKeySequence::ZoomOut);
     zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
+    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Underscore));
     mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
-    mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
+    QList<QKeySequence> resetZoomShortcuts;
+    resetZoomShortcuts.append(settings->shortcut("editor-reset-font-size"));
+    resetZoomShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_0));
+    mActions[ResetZoom]->setShortcuts(resetZoomShortcuts);
 
     QList<QKeySequence> evalShortcuts;
     evalShortcuts.append(settings->shortcut("editor-eval-line"));
@@ -337,19 +342,21 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
             }
             break;
         }
-        case QEvent::KeyPress: {
+        case QEvent::ShortcutOverride: {
             QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
             Qt::KeyboardModifiers mods = keyEvent->modifiers();
             int key = keyEvent->key();
 
-            // Intercept F5 for Refresh (ensure Alt/Meta aren't held down)
+            // 1. Intercept explicit shortcuts before Qt gets confused by layouts
+
+            // F5 for Refresh
             if (key == Qt::Key_F5 && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
                 mActions[Reload]->trigger();
                 event->accept();
                 return true;
             }
 
-            // Intercept Ctrl/Cmd based shortcuts. Allow Shift to support Ctrl+Shift+=
+            // Ctrl/Cmd based combinations (allow Shift so Ctrl+Shift+= is also caught)
             if ((mods & Qt::ControlModifier) && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
                 if (key == Qt::Key_R) {
                     mActions[Reload]->trigger();
@@ -359,21 +366,19 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
                     mActions[ZoomIn]->trigger();
                     event->accept();
                     return true;
-                } else if (key == Qt::Key_Minus) {
+                } else if (key == Qt::Key_Minus || key == Qt::Key_Underscore) {
                     mActions[ZoomOut]->trigger();
+                    event->accept();
+                    return true;
+                } else if (key == Qt::Key_0) {
+                    mActions[ResetZoom]->trigger();
                     event->accept();
                     return true;
                 }
             }
-            break;
-        }
-        case QEvent::ShortcutOverride: {
-            // check if any widget action shortcut matches the observed keyEvent
-            // if yes, capture the event, else, bubble up the event
-            auto keyEvent = static_cast<QKeyEvent*>(event);
 
+            // 2. Fallback for other registered actions in the widget
             auto sequence = OverridingAction::keySequence(keyEvent);
-
             for (int i = 0; i < ActionCount; ++i) {
                 if (mActions[i] && mActions[i]->shortcuts().contains(sequence)) {
                     event->accept();
