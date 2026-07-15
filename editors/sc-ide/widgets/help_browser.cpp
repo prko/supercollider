@@ -60,14 +60,6 @@ namespace ScIDE {
 
 using namespace QtCollider;
 
-#    ifdef Q_OS_WIN
-QAction* HelpBrowser::winCtrlRBlocker = nullptr;
-#    endif
-#    ifdef Q_OS_MAC
-QAction* HelpBrowser::macCmdPlusBlocker = nullptr; // does not work
-QAction* HelpBrowser::macCmdEqualBlocker = nullptr; // does not work
-#    endif
-
 HelpBrowser::HelpBrowser(QWidget* parent): QWidget(parent) {
     QRect availableScreenRect = qApp->primaryScreen()->availableGeometry();
     mSizeHint = QSize(availableScreenRect.width() * 0.4, availableScreenRect.height() * 0.7);
@@ -149,38 +141,6 @@ void HelpBrowser::onPageLoad() {
     static_cast<OverridingAction*>(mActions[Reload])->addToWidget(mWebView->focusProxy());
     static_cast<OverridingAction*>(mActions[Back])->addToWidget(mWebView->focusProxy());
     static_cast<OverridingAction*>(mActions[Forward])->addToWidget(mWebView->focusProxy());
-
-#    ifdef Q_OS_MAC
-    mActions[ZoomIn]->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    mActions[ZoomOut]->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    mActions[ResetZoom]->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-#    endif
-
-#    ifdef Q_OS_WIN
-    if (!winCtrlRBlocker) {
-        winCtrlRBlocker = new OverridingAction(this);
-        winCtrlRBlocker->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
-        winCtrlRBlocker->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    }
-    mWebView->focusProxy()->addAction(winCtrlRBlocker);
-#    endif
-
-#    ifdef Q_OS_MAC
-    if (!macCmdPlusBlocker) {
-        macCmdPlusBlocker = new OverridingAction(this);
-        macCmdPlusBlocker->setShortcut(QKeySequence(Qt::META | Qt::Key_Plus));
-        macCmdPlusBlocker->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-        connect(macCmdPlusBlocker, &QAction::triggered, this, &HelpBrowser::zoomIn);
-    }
-    if (!macCmdEqualBlocker) {
-        macCmdEqualBlocker = new OverridingAction(this);
-        macCmdEqualBlocker->setShortcut(QKeySequence(Qt::META | Qt::Key_Equal));
-        macCmdEqualBlocker->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-        connect(macCmdEqualBlocker, &QAction::triggered, this, &HelpBrowser::zoomIn);
-    }
-    mWebView->focusProxy()->addAction(macCmdPlusBlocker);
-    mWebView->focusProxy()->addAction(macCmdEqualBlocker);
-#    endif
 }
 
 void HelpBrowser::createActions() {
@@ -237,20 +197,10 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    QList<QKeySequence> zoomInShortcuts;
-    zoomInShortcuts.append(settings->shortcut("editor-enlarge-font"));
+    // Use Qt standard shortcuts for Zoom as suggested by the reviewer
+    mActions[ZoomIn]->setShortcut(QKeySequence::ZoomIn);
+    mActions[ZoomOut]->setShortcut(QKeySequence::ZoomOut);
 
-#    ifdef Q_OS_MAC
-    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::Key_Equal));
-    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::Key_Plus));
-#    else
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
-    zoomInShortcuts.append(QKeySequence("Ctrl++"));
-#    endif
-
-    mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
-    mActions[ZoomOut]->setShortcut(settings->shortcut("editor-shrink-font"));
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
 
     QList<QKeySequence> evalShortcuts;
