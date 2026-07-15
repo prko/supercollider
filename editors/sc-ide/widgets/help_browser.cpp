@@ -190,6 +190,12 @@ void HelpBrowser::createActions() {
     mActions[Back] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Back));
     mActions[Forward] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Forward));
     mActions[Reload] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Reload));
+
+    // Ensure Ctrl+R (Windows/Linux) and Cmd+R (macOS) explicitly trigger Reload and block bubbling
+    QList<QKeySequence> reloadShortcuts;
+    reloadShortcuts.append(QKeySequence::Refresh);
+    reloadShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_R));
+    mActions[Reload]->setShortcuts(reloadShortcuts);
 }
 
 void HelpBrowser::applySettings(Settings::Manager* settings) {
@@ -197,9 +203,18 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Use Qt standard shortcuts for Zoom as suggested by the reviewer
-    mActions[ZoomIn]->setShortcut(QKeySequence::ZoomIn);
-    mActions[ZoomOut]->setShortcut(QKeySequence::ZoomOut);
+    // Ensure consistent Zoom In across all platforms (Cmd/Ctrl + '=' and Cmd/Ctrl + '+')
+    QList<QKeySequence> zoomInShortcuts;
+    zoomInShortcuts.append(QKeySequence::ZoomIn);
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
+    mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
+
+    // Ensure consistent Zoom Out across all platforms
+    QList<QKeySequence> zoomOutShortcuts;
+    zoomOutShortcuts.append(QKeySequence::ZoomOut);
+    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
+    mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
 
