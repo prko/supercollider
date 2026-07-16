@@ -205,8 +205,17 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Use standard Qt KeySequences for zooming
-    mActions[ZoomIn]->setShortcut(QKeySequence::ZoomIn);
+    QList<QKeySequence> zoomInShortcuts;
+    zoomInShortcuts.append(QKeySequence::ZoomIn);
+
+#    ifdef Q_OS_MAC
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
+#    else
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
+#    endif
+
+    mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
+
     mActions[ZoomOut]->setShortcut(QKeySequence::ZoomOut);
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
 
