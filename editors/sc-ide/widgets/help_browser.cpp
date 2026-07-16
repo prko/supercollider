@@ -21,6 +21,7 @@
 #ifdef SC_USE_QTWEBENGINE
 
 #    define QT_NO_DEBUG_OUTPUT
+
 #    include "help_browser.hpp"
 #    include "main_window.hpp"
 #    include "../core/sc_process.hpp"
@@ -31,7 +32,6 @@
 #    include <SC_Filesystem.hpp>
 #    include "standard_dirs.hpp"
 
-#    include <qvariant.h>
 #    include <QVBoxLayout>
 #    include <QToolBar>
 #    include <QAction>
@@ -135,6 +135,12 @@ void HelpBrowser::onPageLoad() {
     // add these actions to weview's renderer, to capture shift+enter and possibly other swallowed shortcuts
     static_cast<OverridingAction*>(mActions[EvaluateRegion])->addToWidget(mWebView->focusProxy());
     static_cast<OverridingAction*>(mActions[Evaluate])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[ZoomIn])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[ZoomOut])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[ResetZoom])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[Reload])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[Back])->addToWidget(mWebView->focusProxy());
+    static_cast<OverridingAction*>(mActions[Forward])->addToWidget(mWebView->focusProxy());
 }
 
 void HelpBrowser::createActions() {
@@ -184,6 +190,14 @@ void HelpBrowser::createActions() {
     mActions[Back] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Back));
     mActions[Forward] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Forward));
     mActions[Reload] = proxyPageAction(mWebView->pageAction(QWebEnginePage::Reload));
+
+    // Explicitly set Ctrl+R for Reload to capture the event before it bubbles up
+    // to the IDE's Find/Replace, especially on Windows where Qt's default Refresh
+    // sequence might just be F5 and not catch Ctrl+R.
+    QList<QKeySequence> reloadShortcuts;
+    reloadShortcuts.append(QKeySequence::Refresh);
+    reloadShortcuts.append(QKeySequence("Ctrl+R"));
+    mActions[Reload]->setShortcuts(reloadShortcuts);
 }
 
 void HelpBrowser::applySettings(Settings::Manager* settings) {
@@ -191,17 +205,9 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Use Qt standard shortcuts for zoom in/out, plus platform-specific variants
-    QList<QKeySequence> zoomInShortcuts;
-    zoomInShortcuts.append(QKeySequence::ZoomIn); // Ctrl++ on Windows/Linux, Cmd++ on macOS
-#    ifdef Q_OS_MAC
-    // On macOS, Cmd+Shift+= (the unshifted + key) should also zoom in
-    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::SHIFT | Qt::Key_Equal));
-#    endif
-    mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
-
+    // Use standard Qt KeySequences for zooming
+    mActions[ZoomIn]->setShortcut(QKeySequence::ZoomIn);
     mActions[ZoomOut]->setShortcut(QKeySequence::ZoomOut);
-
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
 
     QList<QKeySequence> evalShortcuts;
@@ -311,11 +317,9 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
             case Qt::XButton1:
                 mWebView->triggerPageAction(QWebEnginePage::Back);
                 return true;
-
             case Qt::XButton2:
                 mWebView->triggerPageAction(QWebEnginePage::Forward);
                 return true;
-
             default:
                 break;
             }
@@ -373,6 +377,8 @@ void HelpBrowser::onScResponse(const QString& command, const QString& data) {
     mWebView->load(urlString);
 
     HelpBrowserDocklet* helpDock = MainWindow::instance()->helpBrowserDocklet();
+    if (helpDock)
+        helpDock->focus();
 
     emit urlChanged();
 }
@@ -381,19 +387,17 @@ void HelpBrowser::evaluateSelection(bool evaluateRegion) {
     static const QString jsSelectLine("selectLine()");
     static const QString jsSelectRegion("selectRegion()");
 
-    mWebView->page()->runJavaScript("window.getSelection().toString()", [this, evaluateRegion](const QVariant& res) {
-        QString selection = res.toString();
-        if (!selection.isEmpty()) {
-            Main::scProcess()->evaluateCode(selection);
-        } else {
-            mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [](QVariant res) {
-                QString selectionResult = res.toString();
-                if (!selectionResult.isEmpty()) {
-                    Main::scProcess()->evaluateCode(selectionResult);
-                }
-            });
-        }
-    });
+    QString selected = mWebView->selectedText();
+    if (!selected.isEmpty()) {
+        Main::scProcess()->evaluateCode(selected);
+    } else {
+        mWebView->page()->runJavaScript(evaluateRegion ? jsSelectRegion : jsSelectLine, [this](QVariant res) {
+            QString selectionResult = res.toString();
+            if (!selectionResult.isEmpty()) {
+                Main::scProcess()->evaluateCode(selectionResult);
+            }
+        });
+    }
 }
 
 void HelpBrowser::onJsConsoleMsg(const QString& arg1, int arg2, const QString& arg3) {
