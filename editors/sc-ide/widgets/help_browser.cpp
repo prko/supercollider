@@ -132,6 +132,11 @@ HelpBrowser::HelpBrowser(QWidget* parent): QWidget(parent) {
 
 void HelpBrowser::onPageLoad() {
     mLoadProgressIndicator->stop();
+
+    if (mWebView->focusProxy()) {
+        mWebView->focusProxy()->installEventFilter(this);
+    }
+
     // add these actions to weview's renderer, to capture shift+enter and possibly other swallowed shortcuts
     static_cast<OverridingAction*>(mActions[EvaluateRegion])->addToWidget(mWebView->focusProxy());
     static_cast<OverridingAction*>(mActions[Evaluate])->addToWidget(mWebView->focusProxy());
@@ -195,7 +200,11 @@ void HelpBrowser::createActions() {
     QList<QKeySequence> reloadShortcuts;
     reloadShortcuts.append(QKeySequence::Refresh);
     reloadShortcuts.append(QKeySequence(Qt::Key_F5));
-    reloadShortcuts.append(QKeySequence("Ctrl+R"));
+#    ifdef Q_OS_MAC
+    reloadShortcuts.append(QKeySequence(Qt::META | Qt::Key_R));
+#    else
+    reloadShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_R));
+#    endif
     mActions[Reload]->setShortcuts(reloadShortcuts);
 }
 
@@ -208,22 +217,38 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
     QList<QKeySequence> zoomInShortcuts;
     zoomInShortcuts.append(QKeySequence::ZoomIn);
     zoomInShortcuts.append(settings->shortcut("editor-enlarge-font"));
+#    ifdef Q_OS_MAC
+    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::Key_Plus));
+    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::SHIFT | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::SHIFT | Qt::Key_Plus));
+#    else
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
     zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Plus));
+#    endif
     mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
 
     QList<QKeySequence> zoomOutShortcuts;
     zoomOutShortcuts.append(QKeySequence::ZoomOut);
     zoomOutShortcuts.append(settings->shortcut("editor-shrink-font"));
+#    ifdef Q_OS_MAC
+    zoomOutShortcuts.append(QKeySequence(Qt::META | Qt::Key_Minus));
+    zoomOutShortcuts.append(QKeySequence(Qt::META | Qt::Key_Underscore));
+#    else
     zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
     zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Underscore));
+#    endif
     mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
     QList<QKeySequence> resetZoomShortcuts;
     resetZoomShortcuts.append(settings->shortcut("editor-reset-font-size"));
+#    ifdef Q_OS_MAC
+    resetZoomShortcuts.append(QKeySequence(Qt::META | Qt::Key_0));
+#    else
     resetZoomShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_0));
+#    endif
     mActions[ResetZoom]->setShortcuts(resetZoomShortcuts);
 
     QList<QKeySequence> evalShortcuts;
@@ -325,7 +350,7 @@ bool HelpBrowser::helpBrowserHasFocus() const {
 }
 
 bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
-    if (object == mWebView) {
+    if (object == mWebView || object == mWebView->focusProxy()) {
         switch (event->type()) {
         case QEvent::MouseButtonPress: {
             QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
