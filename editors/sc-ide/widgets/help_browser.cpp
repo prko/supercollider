@@ -195,7 +195,7 @@ void HelpBrowser::createActions() {
     QList<QKeySequence> reloadShortcuts;
     reloadShortcuts.append(QKeySequence::Refresh);
     reloadShortcuts.append(QKeySequence(Qt::Key_F5));
-    reloadShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_R));
+    reloadShortcuts.append(QKeySequence("Ctrl+R"));
     mActions[Reload]->setShortcuts(reloadShortcuts);
 }
 
@@ -204,25 +204,19 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Ensure consistent Zoom In across all platforms.
+    // Use standard Qt shortcuts plus the user's editor shortcuts (addressing reviewer's feedback)
     QList<QKeySequence> zoomInShortcuts;
     zoomInShortcuts.append(QKeySequence::ZoomIn);
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
-    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Plus));
+    zoomInShortcuts.append(settings->shortcut("editor-enlarge-font"));
     mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
 
-    // Ensure consistent Zoom Out across all platforms
     QList<QKeySequence> zoomOutShortcuts;
     zoomOutShortcuts.append(QKeySequence::ZoomOut);
-    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
-    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Underscore));
+    zoomOutShortcuts.append(settings->shortcut("editor-shrink-font"));
     mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
     QList<QKeySequence> resetZoomShortcuts;
     resetZoomShortcuts.append(settings->shortcut("editor-reset-font-size"));
-    resetZoomShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_0));
     mActions[ResetZoom]->setShortcuts(resetZoomShortcuts);
 
     QList<QKeySequence> evalShortcuts;
@@ -342,47 +336,61 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
             }
             break;
         }
-        case QEvent::ShortcutOverride: {
+        case QEvent::ShortcutOverride:
+        case QEvent::KeyPress: {
             QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
             Qt::KeyboardModifiers mods = keyEvent->modifiers();
             int key = keyEvent->key();
 
-            // 1. Intercept explicit shortcuts before Qt gets confused by layouts
+            // 1. Hard-intercept specific physical key combinations before Qt routes them to the main editor.
+            // On macOS, the physical Command key is Qt::MetaModifier. On Win/Lin, Ctrl is Qt::ControlModifier.
+#    ifdef Q_OS_MAC
+            bool isCmdOrCtrl = (mods & Qt::MetaModifier) && !(mods & Qt::ControlModifier);
+#    else
+            bool isCmdOrCtrl = (mods & Qt::ControlModifier) && !(mods & Qt::MetaModifier);
+#    endif
 
-            // F5 for Refresh
-            if (key == Qt::Key_F5 && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
-                mActions[Reload]->trigger();
-                event->accept();
-                return true;
-            }
-
-            // Ctrl/Cmd based combinations (allow Shift so Ctrl+Shift+= is also caught)
-            if ((mods & Qt::ControlModifier) && !(mods & Qt::AltModifier) && !(mods & Qt::MetaModifier)) {
+            // Intercept Zoom and Reload shortcuts
+            if (isCmdOrCtrl && !(mods & Qt::AltModifier)) {
                 if (key == Qt::Key_R) {
-                    mActions[Reload]->trigger();
+                    if (event->type() == QEvent::KeyPress)
+                        mActions[Reload]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_Equal || key == Qt::Key_Plus) {
-                    mActions[ZoomIn]->trigger();
+                    if (event->type() == QEvent::KeyPress)
+                        mActions[ZoomIn]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_Minus || key == Qt::Key_Underscore) {
-                    mActions[ZoomOut]->trigger();
+                    if (event->type() == QEvent::KeyPress)
+                        mActions[ZoomOut]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_0) {
-                    mActions[ResetZoom]->trigger();
+                    if (event->type() == QEvent::KeyPress)
+                        mActions[ResetZoom]->trigger();
                     event->accept();
                     return true;
                 }
             }
 
+            // Also explicitly catch F5 for Refresh across all platforms
+            if (key == Qt::Key_F5 && mods == Qt::NoModifier) {
+                if (event->type() == QEvent::KeyPress)
+                    mActions[Reload]->trigger();
+                event->accept();
+                return true;
+            }
+
             // 2. Fallback for other registered actions in the widget
-            auto sequence = OverridingAction::keySequence(keyEvent);
-            for (int i = 0; i < ActionCount; ++i) {
-                if (mActions[i] && mActions[i]->shortcuts().contains(sequence)) {
-                    event->accept();
-                    return true;
+            if (event->type() == QEvent::ShortcutOverride) {
+                auto sequence = OverridingAction::keySequence(keyEvent);
+                for (int i = 0; i < ActionCount; ++i) {
+                    if (mActions[i] && mActions[i]->shortcuts().contains(sequence)) {
+                        event->accept();
+                        return true;
+                    }
                 }
             }
             break;
