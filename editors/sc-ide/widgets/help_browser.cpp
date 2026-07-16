@@ -208,15 +208,22 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
     QList<QKeySequence> zoomInShortcuts;
     zoomInShortcuts.append(QKeySequence::ZoomIn);
     zoomInShortcuts.append(settings->shortcut("editor-enlarge-font"));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Plus));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Equal));
+    zoomInShortcuts.append(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Plus));
     mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
 
     QList<QKeySequence> zoomOutShortcuts;
     zoomOutShortcuts.append(QKeySequence::ZoomOut);
     zoomOutShortcuts.append(settings->shortcut("editor-shrink-font"));
+    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Minus));
+    zoomOutShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_Underscore));
     mActions[ZoomOut]->setShortcuts(zoomOutShortcuts);
 
     QList<QKeySequence> resetZoomShortcuts;
     resetZoomShortcuts.append(settings->shortcut("editor-reset-font-size"));
+    resetZoomShortcuts.append(QKeySequence(Qt::CTRL | Qt::Key_0));
     mActions[ResetZoom]->setShortcuts(resetZoomShortcuts);
 
     QList<QKeySequence> evalShortcuts;
@@ -350,26 +357,22 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
             bool isCmdOrCtrl = (mods & Qt::ControlModifier) && !(mods & Qt::MetaModifier);
 #    endif
 
-            // Intercept Zoom and Reload shortcuts
+            // Intercept Zoom and Reload shortcuts (unconditionally trigger action)
             if (isCmdOrCtrl && !(mods & Qt::AltModifier)) {
                 if (key == Qt::Key_R) {
-                    if (event->type() == QEvent::KeyPress)
-                        mActions[Reload]->trigger();
+                    mActions[Reload]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_Equal || key == Qt::Key_Plus) {
-                    if (event->type() == QEvent::KeyPress)
-                        mActions[ZoomIn]->trigger();
+                    mActions[ZoomIn]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_Minus || key == Qt::Key_Underscore) {
-                    if (event->type() == QEvent::KeyPress)
-                        mActions[ZoomOut]->trigger();
+                    mActions[ZoomOut]->trigger();
                     event->accept();
                     return true;
                 } else if (key == Qt::Key_0) {
-                    if (event->type() == QEvent::KeyPress)
-                        mActions[ResetZoom]->trigger();
+                    mActions[ResetZoom]->trigger();
                     event->accept();
                     return true;
                 }
@@ -377,8 +380,7 @@ bool HelpBrowser::eventFilter(QObject* object, QEvent* event) {
 
             // Also explicitly catch F5 for Refresh across all platforms
             if (key == Qt::Key_F5 && mods == Qt::NoModifier) {
-                if (event->type() == QEvent::KeyPress)
-                    mActions[Reload]->trigger();
+                mActions[Reload]->trigger();
                 event->accept();
                 return true;
             }
