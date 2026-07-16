@@ -191,9 +191,15 @@ void HelpBrowser::applySettings(Settings::Manager* settings) {
 
     mActions[DocClose]->setShortcut(settings->shortcut("ide-document-close"));
 
-    // Use Qt standard shortcuts for zoom in/out to ensure consistent behavior
-    // across all platforms, independent of IDE code editor settings
-    mActions[ZoomIn]->setShortcut(QKeySequence::ZoomIn);
+    // Use Qt standard shortcuts for zoom in/out, plus platform-specific variants
+    QList<QKeySequence> zoomInShortcuts;
+    zoomInShortcuts.append(QKeySequence::ZoomIn); // Ctrl++ on Windows/Linux, Cmd++ on macOS
+#    ifdef Q_OS_MAC
+    // On macOS, Cmd+Shift+= (the unshifted + key) should also zoom in
+    zoomInShortcuts.append(QKeySequence(Qt::META | Qt::SHIFT | Qt::Key_Equal));
+#    endif
+    mActions[ZoomIn]->setShortcuts(zoomInShortcuts);
+
     mActions[ZoomOut]->setShortcut(QKeySequence::ZoomOut);
 
     mActions[ResetZoom]->setShortcut(settings->shortcut("editor-reset-font-size"));
