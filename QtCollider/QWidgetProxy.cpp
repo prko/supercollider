@@ -359,12 +359,7 @@ bool QWidgetProxy::interpretMouseEvent(QObject* o, QEvent* e, QList<QVariant>& a
 }
 
 bool QWidgetProxy::interpretMouseWheelEvent(QObject* o, QEvent* e, QList<QVariant>& args) {
-    // NOTE: There seems to be a bug in wheel event propagation:
-    // the event is propagated to parent twice!
-    // Therefore we do not let the propagated events through to SC,
-    // (we only let the "spontaneous" ones).
-
-    if (o != _mouseEventWidget || !e->spontaneous() || !_mouseEventWidget->isEnabled())
+    if (o != _mouseEventWidget || !_mouseEventWidget->isEnabled())
         return false;
 
     QWheelEvent* we = static_cast<QWheelEvent*>(e);
